@@ -1,0 +1,11 @@
+# Gizli Şifreler
+.env
+
+# Sanal Ortam ve Python Çöpleri
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Yerel Veritabanı (İsteğe bağlı, başkası kendi PC'sinde sıfırdan kursun diye)
+db.sqlite3
