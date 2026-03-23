@@ -12,7 +12,7 @@ def kayit_ol_view(request):
         sifre = request.POST.get('sifre')
         sifre_tekrar = request.POST.get('sifre_tekrar')
 
-        # JÜRİ ŞOVU: Şifreler eşleşiyor mu kontrolü
+
         if sifre != sifre_tekrar:
             messages.error(request, "Girdiğiniz şifreler birbiriyle eşleşmiyor!")
             return render(request, 'accounts/register.html')
@@ -79,7 +79,7 @@ def sifre_sifirla_view(request):
         yeni_sifre = request.POST.get('yeni_sifre')
         yeni_sifre_tekrar = request.POST.get('yeni_sifre_tekrar')
 
-        # JÜRİ ŞOVU: İki yeni şifre eşleşiyor mu?
+
         if yeni_sifre != yeni_sifre_tekrar:
             messages.error(request, "Girdiğiniz yeni şifreler birbiriyle eşleşmiyor! Lütfen tekrar deneyin.")
             return render(request, 'accounts/reset_password.html', {'email': email})
