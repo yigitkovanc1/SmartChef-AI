@@ -10,7 +10,6 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
 
     client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-    # JÜRİ ŞOVU: Yapay zekadan malzemeleri gram/ml olarak JSON formatında istiyoruz.
     prompt = f"""
     Senin adın SmartChef. Dünyanın en iyi yapay zeka şefisin.
     Kullanıcı sana yapmak istediği bir yemeğin adını söyleyecek.
@@ -46,51 +45,47 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
         elif raw_text.startswith("```"):
             raw_text = raw_text[3:-3].strip()
 
-        ai_data = json.loads(raw_text)
+        # JSON Çevirme (strict=False kalkanıyla)
+        try:
+            ai_data = json.loads(raw_text, strict=False)
+        except json.JSONDecodeError as decode_err:
+            print(f"\n--- JSON ÇEVİRİ HATASI ---\nHATA: {decode_err}\nBOZUK METİN: {raw_text}\n--------------------------\n")
+            ai_data = {}
 
         tarif_adi = ai_data.get("tarif_adi", "İsimsiz Tarif")
         sohbet_metni = ai_data.get("sohbet", "İşte harika bir tarif şef!")
         malzemeler_listesi = ai_data.get("malzemeler", [])
 
-        # --- ARKA MUTFAK İŞLEMLERİ: VERİTABANINA KAYIT ---
+        # Veritabanı Kayıt İşlemleri
         if malzemeler_listesi:
-            # JÜRİ ŞOVU 2: Kopyalanmayı önleyen kontrol (Sistemde bu tarif var mı?)
             mevcut_tarif = Recipe.objects.filter(title__iexact=tarif_adi).first()
 
-            if not mevcut_tarif:  # Sadece sistemde YOKSA kaydet
-                # 1. Tarifi Veritabanına Oluştur
+            if not mevcut_tarif:
                 yeni_tarif = Recipe.objects.create(
                     user=user,
                     title=tarif_adi,
                     instructions=sohbet_metni
                 )
 
-                # 2. Malzemeleri Tek Tek Dön ve Veritabanına Ekle
                 for malz in malzemeler_listesi:
                     isim = malz.get("isim", "").lower().strip()
                     miktar = malz.get("miktar", 0)
                     birim = malz.get("birim", "")
 
                     if isim:
-                        # a. Malzeme yoksa yarat, varsa olanı al
                         ingredient_obj, created = Ingredient.objects.get_or_create(name=isim)
-
-                        # b. Tarifi ve Malzemeyi birbirine bağla
                         RecipeIngredient.objects.create(
                             recipe=yeni_tarif,
                             ingredient=ingredient_obj,
                             quantity=miktar,
                             unit=birim
                         )
-        # --------------------------------------------------
 
     except Exception as e:
         sohbet_metni = "Üzgünüm şef, tarif defterimi bulamıyorum. Lütfen yemeğin adını tekrar yazar mısın?"
         malzemeler_listesi = []
-        # Eğer arka planda bir şey patlarsa, terminale kırmızıyla yazsın diye bunu ekledim:
         print(f"\n--- ARKA MUTFAKTA BİR ŞEY PATLADI ---\nHATA: {e}\n-----------------------------------\n")
 
-    # Chat ekranında göstermek için metni birleştiriyoruz
     db_kayit = sohbet_metni
     if malzemeler_listesi:
         db_kayit += "\n\nMalzemeler:\n- " + "\n- ".join(
@@ -98,6 +93,5 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
 
     Chat.objects.create(user=user, session_id=session_id, message=db_kayit, sender='ai')
 
-    # Ön yüze veriyi gönder
     return {"sohbet": sohbet_metni,
             "malzemeler": [f"{m.get('miktar')} {m.get('birim')} {m.get('isim')}" for m in malzemeler_listesi]}
