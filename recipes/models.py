@@ -35,3 +35,20 @@ class RecipeIngredient(models.Model):
 
     def __str__(self):
         return f"{self.recipe.title} -> {self.ingredient.name} ({self.quantity} {self.unit})"
+
+from django.contrib.auth.models import User # Eğer en üstte yoksa bunu da ekle
+
+# ==========================================
+# FAVORİ TARİFLER TABLOSU
+# ==========================================
+class Favorite(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    recipe = models.ForeignKey('Recipe', on_delete=models.CASCADE, related_name='favorited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Bir kullanıcı aynı tarifi 2 kez favoriye ekleyemesin diye kilit koyuyoruz.
+        unique_together = ('user', 'recipe')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.recipe.title}"

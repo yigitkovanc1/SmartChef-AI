@@ -8,5 +8,6 @@ urlpatterns = [
     path('anasayfa/', views.ana_sayfa_view, name='ana_sayfa'),
     path('sifremi-unuttum/', views.sifremi_unuttum_view, name='sifremi_unuttum'),
     path('sifre-sifirla/', views.sifre_sifirla_view, name='sifre_sifirla'),
+    path('profil/', views.profil_view, name='profil_sayfasi'),
 ]
 

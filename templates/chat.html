@@ -32,10 +32,11 @@
 
     <nav class="navbar navbar-expand-lg navbar-custom py-3">
         <div class="container-fluid px-4">
-            <a class="navbar-brand brand-text" href="#">🍽️ SmartChef AI</a>
+            <a class="navbar-brand brand-text" href="/">🍽️ SmartChef AI</a>
             <div class="d-flex align-items-center">
                 <span class="me-3 fw-bold text-muted">Şef {{ request.user.username }}</span>
-                <a href="{% url 'cikis_yap' %}" class="btn btn-outline-danger btn-sm" style="border-radius: 8px;">Mutfaktan Çık</a>
+                <a href="/" class="btn btn-outline-secondary btn-sm me-2" style="border-radius: 8px;">Anasayfa</a>
+                <a href="/hesap/profil/" class="btn btn-outline-primary btn-sm me-2" style="border-radius: 8px;">Profilim</a>
             </div>
         </div>
     </nav>
@@ -71,16 +72,13 @@
         const messageText = userInput.value.trim();
         if (!messageText) return;
 
-        // 1. Kullanıcının mesajını ekle
         chatBox.insertBefore(createMessageElement(messageText, 'msg-user', '👤 Sen:'), loadingBtn);
         userInput.value = '';
         scrollToBottom();
 
-        // 2. Yükleniyor...
         loadingBtn.style.display = 'block';
         scrollToBottom();
 
-        // 3. Arka Mutfağa gönder
         try {
             const response = await fetch("{% url 'chat_api' %}", {
                 method: 'POST',
@@ -94,12 +92,10 @@
             const data = await response.json();
             loadingBtn.style.display = 'none';
 
-            // 4. Ana Sohbet Mesajı (Tarif)
             if (data.sohbet) {
                 chatBox.insertBefore(createMessageElement(data.sohbet, 'msg-ai', '👨‍🍳 SmartChef:'), loadingBtn);
             }
 
-            // 5. Malzeme Listesi Balonu (Sadece malzeme varsa çıkar)
             if (data.malzemeler && data.malzemeler.length > 0) {
                 let malzemeHTML = "<ul style='margin-top: 10px; margin-bottom: 0; padding-left: 20px; font-weight: 500;'>";
                 data.malzemeler.forEach(function(item) {
@@ -108,6 +104,13 @@
                 malzemeHTML += "</ul>";
 
                 chatBox.insertBefore(createMessageElement("<b style='color:#ff6b6b;'>🛒 Gerekli Malzemeler:</b>" + malzemeHTML, 'msg-ai', '📋 Reçete Sistemi:'), loadingBtn);
+            }
+            // YENİ: Eğer backend bize bir tarif ID'si gönderdiyse FAVORİ BUTONU çıkar
+            if (data.recipe_id) {
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'mt-2 mb-3';
+                actionDiv.innerHTML = `<button class="btn btn-sm btn-outline-warning shadow-sm fw-bold" onclick="toggleFavori('${data.recipe_id}', this)">⭐ Favorilere Ekle</button>`;
+                chatBox.insertBefore(actionDiv, loadingBtn);
             }
             scrollToBottom();
 
@@ -127,6 +130,23 @@
 
     function scrollToBottom() {
         chatBox.scrollTop = chatBox.scrollHeight;
+    }// YENİ: Favoriye Ekleme İşlevi
+    async function toggleFavori(recipeId, btnElement) {
+        try {
+            const res = await fetch(`/tarifler/favori-yap/${recipeId}/`);
+            const data = await res.json();
+
+            if (data.is_favorite) {
+                btnElement.innerHTML = '🌟 Favorilerimde';
+                btnElement.classList.replace('btn-outline-warning', 'btn-warning');
+            } else {
+                btnElement.innerHTML = '⭐ Favorilere Ekle';
+                btnElement.classList.replace('btn-warning', 'btn-outline-warning');
+            }
+        } catch (err) {
+            console.error("Favori işlemi başarısız:", err);
+            alert("Mutfakta bir kaza oldu, favoriye eklenemedi.");
+        }
     }
 </script>
 </body>

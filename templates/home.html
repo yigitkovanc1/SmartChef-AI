@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartChef - Yapay Zeka Şefin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .navbar-custom { background-color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .brand-text { color: #ff6b6b; font-weight: 800; font-size: 1.5rem; text-decoration: none;}
+
+        .hero-section { padding: 120px 0; text-align: center; }
+        .btn-custom { background-color: #ff6b6b; color: white; border-radius: 30px; padding: 12px 35px; font-weight: bold; font-size: 1.1rem; transition: 0.3s; }
+        .btn-custom:hover { background-color: #fa5252; color: white; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+    <!-- YÖNLENDİRİCİ NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-custom py-3">
+        <div class="container">
+            <a class="navbar-brand brand-text" href="/">🍽️ SmartChef AI</a>
+            <div class="ms-auto d-flex gap-3">
+                <!-- Eğer kullanıcı giriş yapmışsa Profil ve Sohbet butonlarını görsün -->
+                {% if user.is_authenticated %}
+                    <a href="/chat/" class="btn btn-outline-dark" style="border-radius: 20px;">Sohbete Dön</a>
+                    <a href="/hesap/profil/" class="btn btn-outline-primary" style="border-radius: 20px;">👤 Profilim</a>
+                <!-- Giriş yapmamışsa Giriş Yap butonunu görsün -->
+                {% else %}
+                    <a href="/hesap/giris/" class="btn btn-outline-dark" style="border-radius: 20px;">Giriş Yap</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- KAHRAMAN BÖLÜMÜ (HERO) -->
+    <div class="hero-section container">
+        <h1 class="display-4 fw-bold" style="color: #333;">Mutfağındaki Yapay Zeka Şefin</h1>
+        <p class="lead text-muted mt-4 mb-5 col-md-8 mx-auto">
+            Dolabındaki malzemeleri söyle, SmartChef sana özel saniyeler içinde harika tarifler yaratsın ve porsiyon maliyetlerini anında hesaplasın. Yemek yapmak hiç bu kadar akıllıca olmamıştı!
+        </p>
+        <div>
+            <a href="/chat/" class="btn btn-custom shadow">Hemen Pişirmeye Başla 🍳</a>
+        </div>
+    </div>
+<!-- ÖNERİLEN TARİFLER BÖLÜMÜ -->
+    <div class="container mt-5 mb-5">
+        <h2 class="text-center mb-5 fw-bold" style="color: #333;">🔥 Günün Şef Önerileri</h2>
+        <div class="row">
+            {% for tarif in onerilen_tarifler %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-0" style="border-radius: 15px; overflow: hidden; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-danger">{{ tarif.title }}</h5>
+                        <p class="card-text text-muted" style="font-size: 0.95rem;">
+                            {{ tarif.instructions|truncatechars:120 }}
+                        </p>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-4 text-center">
+                        <a href="/chat/" class="btn btn-outline-danger btn-sm" style="border-radius: 10px; padding: 8px 20px;">Tarifi Yapay Zekaya Sor</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center text-muted">
+                <p class="fs-5">Henüz mutfakta pişen bir tarif yok. İlk tarifi sen oluştur!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

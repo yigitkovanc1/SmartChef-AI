@@ -50,7 +50,7 @@ def cikis_yap_view(request):
 
 @login_required(login_url='giris_yap')
 def ana_sayfa_view(request):
-    return render(request, 'accounts/home.html')
+    return render(request, 'accounts/chat.html')
 
 
 def sifremi_unuttum_view(request):
@@ -95,3 +95,13 @@ def sifre_sifirla_view(request):
             messages.error(request, mesaj)
 
     return render(request, 'accounts/reset_password.html', {'email': email})
+
+
+@login_required
+def profil_view(request):
+    # Kullanıcının favorilerini çekiyoruz
+    favoriler = request.user.favorites.all()  # related_name='favorites' demiştik
+    # Favori nesnelerinin içinden asıl tarif (recipe) nesnelerini ayıklıyoruz
+    favori_tarifler = [f.recipe for f in favoriler]
+
+    return render(request, 'accounts/profile.html', {'favori_tarifler': favori_tarifler})

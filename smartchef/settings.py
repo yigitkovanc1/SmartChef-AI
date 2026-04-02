@@ -62,7 +62,8 @@ ROOT_URLCONF = 'smartchef.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        # İŞTE BURASI! Django'ya templates klasörünün yerini öğretiyoruz:
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -132,3 +133,9 @@ EMAIL_PORT = 587
 
 EMAIL_HOST_USER = 'smart.chef.mat132@gmail.com'
 EMAIL_HOST_PASSWORD = 'bacm ehjj hjjr upnh'
+
+# ==========================================
+# KULLANICI MEDYA DOSYALARI (FOTOĞRAFLAR)
+# ==========================================
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
