@@ -22,6 +22,7 @@ class Recipe(models.Model):
     servings = models.IntegerField(blank=True, null=True)
     difficulty_level = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(upload_to='tarif_fotograflari/', null=True, blank=True)
 
     def __str__(self):
         return self.title
@@ -52,3 +53,13 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.recipe.title}"
+class RecipeCostHistory(models.Model):
+        recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='cost_history')
+        total_cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Toplam Maliyet (TL)")
+        date_recorded = models.DateField(auto_now_add=True, verbose_name="Kayıt Tarihi")
+
+        class Meta:
+            ordering = ['-date_recorded']  # En yeni tarih en üstte çıksın
+
+        def __str__(self):
+            return f"{self.recipe.title} - {self.total_cost} ₺ ({self.date_recorded})"

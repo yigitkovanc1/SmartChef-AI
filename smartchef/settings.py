@@ -134,8 +134,8 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'smart.chef.mat132@gmail.com'
 EMAIL_HOST_PASSWORD = 'bacm ehjj hjjr upnh'
 
-# ==========================================
-# KULLANICI MEDYA DOSYALARI (FOTOĞRAFLAR)
-# ==========================================
+
+
+# Yüklenen fotoğrafların klasör ayarları
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

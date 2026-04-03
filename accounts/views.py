@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from .services import create_user_account, authenticate_user, send_password_reset_code, reset_user_password
-
+from recipes.models import Recipe, RecipeCostHistory
 
 def kayit_ol_view(request):
     if request.method == 'POST':
@@ -22,7 +22,7 @@ def kayit_ol_view(request):
             messages.success(request, mesaj)
             return redirect('giris_yap')
         else:
-            messages.error(request, request)
+            messages.error(request, mesaj)
 
     return render(request, 'accounts/register.html')
 
@@ -50,7 +50,7 @@ def cikis_yap_view(request):
 
 @login_required(login_url='giris_yap')
 def ana_sayfa_view(request):
-    return render(request, 'accounts/chat.html')
+    return render(request, 'home.html')
 
 
 def sifremi_unuttum_view(request):
@@ -105,3 +105,14 @@ def profil_view(request):
     favori_tarifler = [f.recipe for f in favoriler]
 
     return render(request, 'accounts/profile.html', {'favori_tarifler': favori_tarifler})
+
+
+@login_required(login_url='giris_yap')
+def dashboard_view(request):
+    # Veritabanındaki tüm tarifleri ve maliyet geçmişlerini çekiyoruz
+    tarifler = Recipe.objects.all().prefetch_related('cost_history')
+
+    context = {
+        'tarifler': tarifler
+    }
+    return render(request, 'dashboard.html', context)
