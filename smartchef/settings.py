@@ -139,3 +139,9 @@ EMAIL_HOST_PASSWORD = 'bacm ehjj hjjr upnh'
 # Yüklenen fotoğrafların klasör ayarları
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Kullanıcı giriş yaptığında otomatik olarak anasayfaya at
+LOGIN_REDIRECT_URL = '/'
+
+# Kullanıcı çıkış yaptığında otomatik olarak giriş sayfasına veya anasayfaya at
+LOGOUT_REDIRECT_URL = '/hesap/giris/'

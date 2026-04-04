@@ -52,3 +52,15 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()  # Kullanıcı güncellendiğinde profilini de kaydet.
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+# Kullanıcıların profil fotoğraflarını tutacak tablo
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    profile_picture = models.ImageField(upload_to='profil_fotograflari/', null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} Profili"
+

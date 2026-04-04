@@ -4,7 +4,6 @@ from google import genai
 from .models import Chat
 from recipes.models import Recipe, Ingredient, RecipeIngredient
 
-
 def gemini_ile_sohbet_et(user, session_id, user_message):
     Chat.objects.create(user=user, session_id=session_id, message=user_message, sender='user')
 
@@ -32,6 +31,8 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
 
     Kullanıcının isteği: {user_message}
     """
+
+    yeni_tarif_id = None  # YENİ: ID'yi en başta boş bir değişken olarak tanımlıyoruz
 
     try:
         response = client.models.generate_content(
@@ -66,6 +67,7 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
                     title=tarif_adi,
                     instructions=sohbet_metni
                 )
+                yeni_tarif_id = str(yeni_tarif.id) # YENİ: Kaydedilen tarifin ID'sini yakalıyoruz!
 
                 for malz in malzemeler_listesi:
                     isim = malz.get("isim", "").lower().strip()
@@ -80,6 +82,8 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
                             quantity=miktar,
                             unit=birim
                         )
+            else:
+                yeni_tarif_id = str(mevcut_tarif.id) # Eğer sistemde aynı tarif uydurulursa onun ID'sini alıyoruz.
 
     except Exception as e:
         sohbet_metni = "Üzgünüm şef, tarif defterimi bulamıyorum. Lütfen yemeğin adını tekrar yazar mısın?"
@@ -93,5 +97,9 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
 
     Chat.objects.create(user=user, session_id=session_id, message=db_kayit, sender='ai')
 
-    return {"sohbet": sohbet_metni,
-            "malzemeler": [f"{m.get('miktar')} {m.get('birim')} {m.get('isim')}" for m in malzemeler_listesi]}
+    # YENİ: Artık Javascript'in beklediği o 'recipe_id' değerini de pakete ekleyip gönderiyoruz!
+    return {
+        "sohbet": sohbet_metni,
+        "malzemeler": [f"{m.get('miktar')} {m.get('birim')} {m.get('isim')}" for m in malzemeler_listesi],
+        "recipe_id": yeni_tarif_id
+    }

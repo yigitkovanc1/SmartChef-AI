@@ -4,6 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from .services import create_user_account, authenticate_user, send_password_reset_code, reset_user_password
 from recipes.models import Recipe, RecipeCostHistory
+from .models import Profile
 
 def kayit_ol_view(request):
     if request.method == 'POST':
@@ -36,7 +37,7 @@ def giris_yap_view(request):
 
         if basarili_mi:
             login(request, user)
-            return redirect('ana_sayfa')
+            return redirect('/')
         else:
             messages.error(request, mesaj)
 
@@ -97,14 +98,22 @@ def sifre_sifirla_view(request):
     return render(request, 'accounts/reset_password.html', {'email': email})
 
 
-@login_required
+@login_required(login_url='giris_yap')
 def profil_view(request):
-    # Kullanıcının favorilerini çekiyoruz
-    favoriler = request.user.favorites.all()  # related_name='favorites' demiştik
-    # Favori nesnelerinin içinden asıl tarif (recipe) nesnelerini ayıklıyoruz
-    favori_tarifler = [f.recipe for f in favoriler]
+    # Eğer sistemde eski bir hesapsa ve profili yoksa çökmesin diye otomatik oluşturuyoruz
+    profil, created = Profile.objects.get_or_create(user=request.user)
 
-    return render(request, 'accounts/profile.html', {'favori_tarifler': favori_tarifler})
+    if request.method == 'POST':
+        # Kullanıcı fotoğraf yüklediyse
+        if 'profile_picture' in request.FILES:
+            profil.profile_picture = request.FILES['profile_picture']
+            profil.save()
+            messages.success(request, "Profil fotoğrafın jilet gibi güncellendi!")
+            return redirect('profil_sayfasi')  # Senin url ismin neyse onu yaz
+
+    # (Burada favori tarifleri çektiğin eski kodların durmaya devam edebilir)
+
+    return render(request, 'accounts/profile.html', {'profil': profil})
 
 
 @login_required(login_url='giris_yap')
