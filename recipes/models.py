@@ -53,6 +53,8 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.recipe.title}"
+
+
 class RecipeCostHistory(models.Model):
         recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='cost_history')
         total_cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Toplam Maliyet (TL)")

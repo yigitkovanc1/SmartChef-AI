@@ -5,6 +5,10 @@ from django.contrib.auth.decorators import login_required
 from .services import create_user_account, authenticate_user, send_password_reset_code, reset_user_password
 from recipes.models import Recipe, RecipeCostHistory
 from .models import Profile
+from markets.models import MarketCost
+from collections import defaultdict
+from recipes.models import Favorite
+from django.contrib import messages
 
 def kayit_ol_view(request):
     if request.method == 'POST':
@@ -109,19 +113,41 @@ def profil_view(request):
             profil.profile_picture = request.FILES['profile_picture']
             profil.save()
             messages.success(request, "Profil fotoğrafın jilet gibi güncellendi!")
-            return redirect('profil_sayfasi')  # Senin url ismin neyse onu yaz
+            return redirect('profil_sayfasi')  # urls.py'daki ismin neyse o kalsın
 
-    # (Burada favori tarifleri çektiğin eski kodların durmaya devam edebilir)
+    # 🚀 İŞTE YENİ EKLENEN FAVORİLER KISMI
+    # select_related('recipe') ile veritabanını yormadan tarif detaylarını da hızlıca çekiyoruz
+    kullanici_favorileri = Favorite.objects.filter(user=request.user).select_related('recipe').order_by('-created_at')
 
-    return render(request, 'accounts/profile.html', {'profil': profil})
+    # 📦 PAKETİ HAZIRLIYORUZ: Hem profil bilgilerini hem favorileri HTML'e gönderiyoruz
+    context = {
+        'profil': profil,
+        'favoriler': kullanici_favorileri
+    }
+
+    return render(request, 'accounts/profile.html', context)
 
 
-@login_required(login_url='giris_yap')
+@login_required(login_url='/hesap/giris/')
 def dashboard_view(request):
-    # Veritabanındaki tüm tarifleri ve maliyet geçmişlerini çekiyoruz
-    tarifler = Recipe.objects.all().prefetch_related('cost_history')
+    # Tüm maliyetleri eskiden yeniye çekiyoruz (Grafik soldan sağa aksın diye)
+    maliyetler = MarketCost.objects.filter(user=request.user).order_by('tarih')
+
+    # Verileri tariflere göre grupla
+    gruplanmis_maliyetler = defaultdict(list)
+    for m in maliyetler:
+        gruplanmis_maliyetler[m.recipe].append(m)
+
+    # Template'e daha rahat göndermek için listeye çevirelim
+    tarif_listesi = []
+    for recipe, costs in gruplanmis_maliyetler.items():
+        tarif_listesi.append({
+            'recipe': recipe,
+            'costs': costs,
+            'son_maliyet': costs[-1],  # Listenin en sonundaki en güncelidir
+        })
 
     context = {
-        'tarifler': tarifler
+        'tarif_listesi': tarif_listesi
     }
     return render(request, 'dashboard.html', context)

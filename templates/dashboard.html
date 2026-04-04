@@ -14,7 +14,8 @@
         .dashboard-card { border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background-color: white; padding: 20px;}
         .table-custom { margin-bottom: 0; }
         .table-custom th { background-color: #f8f9fa; color: #555; border-bottom: 2px solid #eee; }
-        .cost-badge { background-color: #e3f2fd; color: #0d47a1; font-weight: bold; padding: 5px 10px; border-radius: 8px; }
+        .cost-badge { background-color: #ffe8e8; color: #ff6b6b; font-weight: bold; padding: 5px 10px; border-radius: 8px; border: 1px solid #ffcdcd;}
+        .sepet-badge { background-color: #e3f2fd; color: #0d47a1; font-weight: 600; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem;}
     </style>
 </head>
 <body>
@@ -38,48 +39,88 @@
     </nav>
 
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold text-dark">📈 Enflasyon & Maliyet Paneli</h2>
-            <button class="btn btn-success fw-bold shadow-sm" style="border-radius: 10px;" disabled>
-                🤖 Market Botu (Yakında)
-            </button>
+        <h2 class="fw-bold text-dark mb-4">📈 Tarif Bazlı Maliyet Analizi</h2>
+
+    <div class="row">
+        {% for item in tarif_listesi %}
+        <div class="col-lg-6 mb-4"> <div class="dashboard-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-secondary m-0">🥘 {{ item.recipe.title }}</h5>
+                    <span class="cost-badge">{{ item.son_maliyet.porsiyon_maliyeti }} ₺</span>
+                </div>
+
+                <div style="height: 200px; position: relative;">
+                    <canvas id="chart-{{ item.recipe.id }}"></canvas>
+                </div>
+
+                <div class="mt-3 text-muted small">
+                    🛒 Son sepet toplamı: {{ item.son_maliyet.toplam_sepet }} ₺
+                    <br>
+                    📅 Son güncelleme: {{ item.son_maliyet.tarih|date:"d M Y" }}
+                </div>
+            </div>
         </div>
 
+        <script>
+            (function() {
+                const ctx = document.getElementById('chart-{{ item.recipe.id }}').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [{% for m in item.costs %}"{{ m.tarih|date:'d M' }}",{% endfor %}],
+                        datasets: [{
+                            label: 'Porsiyon (TL)',
+                            data: [{% for m in item.costs %}{{ m.porsiyon_maliyeti|stringformat:".2f"|safe }},{% endfor %}],
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: false } }
+                    }
+                });
+            })();
+        </script>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <h4 class="text-muted">Henüz hesaplanmış bir tarif maliyeti yok şef!</h4>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
         <div class="row">
-            <!-- Sol Taraf: Tarifler Tablosu -->
-            <div class="col-lg-8 mb-4">
-                <div class="dashboard-card">
-                    <h5 class="fw-bold mb-3">Tariflerin Maliyet Geçmişi</h5>
+            <!-- Sol Taraf: Maliyet Fişleri Tablosu -->
+            <div class="col-lg-7 mb-4">
+                <div class="dashboard-card h-100">
+                    <h5 class="fw-bold mb-3">Hesaplama Geçmişi (Fişler)</h5>
                     <div class="table-responsive">
                         <table class="table table-hover table-custom align-middle">
                             <thead>
                                 <tr>
+                                    <th>Tarih</th>
                                     <th>Tarif Adı</th>
-                                    <th>Son Güncellenme</th>
-                                    <th>Güncel Maliyet</th>
-                                    <th>Durum</th>
+                                    <th>Porsiyon Maliyeti</th>
+                                    <th>Market Sepeti</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for tarif in tarifler %}
+                                {% for maliyet in maliyetler %}
                                 <tr>
-                                    <td class="fw-bold text-secondary">{{ tarif.title }}</td>
-                                    <!-- Eğer tarifin maliyet geçmişi varsa en sonuncuyu alıyoruz -->
-                                    {% with son_maliyet=tarif.cost_history.first %}
-                                        {% if son_maliyet %}
-                                            <td class="text-muted">{{ son_maliyet.date_recorded|date:"d M Y" }}</td>
-                                            <td><span class="cost-badge">{{ son_maliyet.total_cost }} ₺</span></td>
-                                            <td><span class="badge bg-success">Güncel</span></td>
-                                        {% else %}
-                                            <td class="text-muted">-</td>
-                                            <td><span class="badge bg-light text-dark border">Hesaplanmadı</span></td>
-                                            <td><span class="badge bg-warning text-dark">Bot Bekleniyor</span></td>
-                                        {% endif %}
-                                    {% endwith %}
+                                    <td class="text-muted" style="font-size: 0.9rem;">{{ maliyet.tarih|date:"d M Y, H:i" }}</td>
+                                    <td class="fw-bold text-secondary">{{ maliyet.recipe.title }}</td>
+                                    <td><span class="cost-badge">{{ maliyet.porsiyon_maliyeti }} ₺</span></td>
+                                    <td><span class="sepet-badge">{{ maliyet.toplam_sepet }} ₺</span></td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="4" class="text-center py-4 text-muted">Sistemde henüz kayıtlı tarif yok.</td>
+                                    <td colspan="4" class="text-center py-4 text-muted">Henüz hiç maliyet hesaplaması yapmadın şef!</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -88,16 +129,101 @@
                 </div>
             </div>
 
-            <!-- Sağ Taraf: Grafik Alanı (Bot gelince dolacak) -->
-            <div class="col-lg-4 mb-4">
-                <div class="dashboard-card h-100 d-flex flex-column justify-content-center align-items-center text-center" style="background: linear-gradient(135deg, #1e3c72, #2a5298); color: white;">
-                    <h1 style="font-size: 4rem;">📊</h1>
-                    <h4 class="fw-bold mt-3">Maliyet Grafikleri</h4>
-                    <p class="text-white-50 px-3">Market botu aktif edildiğinde, malzemelerin zaman içindeki fiyat değişimleri burada görselleştirilecektir.</p>
+            <!-- Sağ Taraf: Chart.js Çizgi Grafiği -->
+            <div class="col-lg-5 mb-4">
+                <div class="dashboard-card h-100 d-flex flex-column">
+                    <h5 class="fw-bold mb-3 text-center">📊 Porsiyon Maliyeti Trendi</h5>
+                    <div style="flex-grow: 1; position: relative; min-height: 250px;">
+                        <!-- Canvas grafiğin çizileceği yerdir -->
+                        <canvas id="costChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- GRAFİK BEYNİ (JavaScript) -->
+    <script>
+        // Django'dan gelen maliyet verilerini JavaScript dizisine çeviriyoruz
+        // Grafiğin soldan sağa (eskiden yeniye) akması için "reversed" kullanıyoruz
+        const rawData = [
+            {% for m in maliyetler reversed %}
+            {
+                tarih: "{{ m.tarih|date:'d M' }}",
+                tarif: "{{ m.recipe.title|escapejs }}",
+                // Virgüllü sayıları (ör: 145,50) JS'nin anlayacağı noktaya çeviriyoruz
+                maliyet: parseFloat("{{ m.porsiyon_maliyeti }}".replace(',', '.'))
+            },
+            {% endfor %}
+        ];
+
+        // Eğer veri yoksa grafiği boş göstermemek için
+        if (rawData.length > 0) {
+            // X Ekseni: Tarihler (Altında tarif adı yazar)
+            const etiketler = rawData.map(item => item.tarih);
+
+            // Y Ekseni: Maliyet Fiyatları
+            const veriler = rawData.map(item => item.maliyet);
+
+            // Tarif isimlerini grafiğin üstüne gelince göstermek için ayırıyoruz
+            const tarifIsimleri = rawData.map(item => item.tarif);
+
+            const ctx = document.getElementById('costChart').getContext('2d');
+            const costChart = new Chart(ctx, {
+                type: 'line', // Çizgi grafiği
+                data: {
+                    labels: etiketler,
+                    datasets: [{
+                        label: 'Porsiyon Maliyeti (TL)',
+                        data: veriler,
+                        borderColor: '#ff6b6b', // SmartChef kırmızı/pembe teması
+                        backgroundColor: 'rgba(255, 107, 107, 0.2)', // Çizginin altındaki hafif gölge
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#ff6b6b',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        fill: true, // Altını boya
+                        tension: 0.4 // Çizgileri yumuşak/kıvrımlı yap (0 düz çizgi yapar)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }, // Üstteki açıklama kutusunu gizle (daha temiz durur)
+                        tooltip: {
+                            callbacks: {
+                                // Fareyle üstüne gelince tarifin adını ve fiyatını göster
+                                title: function(context) {
+                                    return tarifIsimleri[context[0].dataIndex] + " (" + context[0].label + ")";
+                                },
+                                label: function(context) {
+                                    return context.parsed.y + ' ₺';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true, // Y ekseni 0'dan başlasın
+                            ticks: {
+                                callback: function(value) { return value + ' ₺'; }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            // Eğer veritabanında henüz hiç maliyet kaydı yoksa
+            const ctx = document.getElementById('costChart').getContext('2d');
+            ctx.font = "14px 'Segoe UI'";
+            ctx.fillStyle = "#888";
+            ctx.textAlign = "center";
+            ctx.fillText("Henüz hesaplanmış bir maliyet yok.", 200, 125);
+            ctx.fillText("Chat'ten bir tarifin maliyetini hesapla!", 200, 150);
+        }
+    </script>
 </body>
 </html>

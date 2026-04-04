@@ -27,3 +27,18 @@ class PriceHistory(models.Model):
     market_product = models.ForeignKey(MarketProduct, on_delete=models.CASCADE, related_name='price_history')
     price = models.DecimalField(max_digits=10, decimal_places=2)
     recorded_at = models.DateTimeField(auto_now_add=True)
+
+# (Senin mevcut Market, MarketProduct, PriceHistory modellerin yukarıda kalsın)
+from django.contrib.auth.models import User
+from recipes.models import Recipe
+
+class MarketCost(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False) # Senin mimarine uyarladık!
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı", related_name="market_costs")
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, verbose_name="Tarif", related_name="calculated_costs")
+    toplam_sepet = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Market Sepeti (TL)")
+    porsiyon_maliyeti = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Tarif Maliyeti (TL)")
+    tarih = models.DateTimeField(auto_now_add=True, verbose_name="Hesaplanma Tarihi")
+
+    def __str__(self):
+        return f"{self.user.username} | {self.recipe.title} | {self.porsiyon_maliyeti} TL"

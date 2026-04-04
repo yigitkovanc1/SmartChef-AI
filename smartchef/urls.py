@@ -17,6 +17,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('recipes.urls')), # Veya senin anasayfa yönlendirmen
     # ... senin diğer yolların ...
+    path('market/', include('markets.urls'))
 ]
 
 if settings.DEBUG:
