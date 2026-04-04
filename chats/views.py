@@ -5,15 +5,11 @@ import uuid
 from django.http import JsonResponse
 from .services import gemini_ile_sohbet_et
 import traceback
-from recipes.models import Recipe, Ingredient, RecipeIngredient
-
-# YENİ: Veritabanındaki tarif ve malzemeleri çekmek için modelleri dahil ediyoruz
 from recipes.models import Recipe, RecipeIngredient
 
 @login_required(login_url='giris_yap')
 def chat_sayfasi_view(request):
     return render(request, 'chat.html')
-
 
 @login_required(login_url='giris_yap')
 def chat_api_view(request):
@@ -27,7 +23,7 @@ def chat_api_view(request):
             session_id = request.session['chat_session_id']
 
             # ==========================================
-            # 🚀 BÜYÜK OPTİMİZASYON: VERİTABANI KONTROLÜ
+            # 1. HAFIZA KONTROLÜ (Daha önce aynı tarifi konuştuk mu?)
             # ==========================================
             mesaj_kucuk = kullanici_mesaji.lower()
             mevcut_tarif = None
@@ -49,44 +45,16 @@ def chat_api_view(request):
                 })
 
             # ==========================================
-            # EĞER TARİF YOKSA: YAPAY ZEKAYA (GEMINI) SOR
+            # 2. YAPAY ZEKAYA SOR (Bütün kaydetme işini services.py yapıyor!)
             # ==========================================
             yapay_zeka_verisi = gemini_ile_sohbet_et(request.user, session_id, kullanici_mesaji)
 
-            # 🚀 İŞTE SİHİRLİ DOKUNUŞ BURADA BAŞLIYOR 🚀
-            # Eğer yapay zeka bize bir malzeme listesi döndüyse (yani bu bir tarifse):
-            if yapay_zeka_verisi.get('malzemeler') and len(yapay_zeka_verisi['malzemeler']) > 0:
-
-                # 1. Gemini'nin ürettiği tarifi KALICI olarak veritabanına kaydet
-                yeni_tarif = Recipe.objects.create(
-                    user=request.user,  # 🚀 İŞTE EKSİK OLAN HAYATİ SATIR BU!
-                    title=kullanici_mesaji.capitalize(),
-                    instructions=yapay_zeka_verisi.get('sohbet', 'Yapay zeka tarifi...')
-                )
-
-                # 2. Malzemeleri de veritabanına (RecipeIngredient) kaydet
-                for malzeme_metni in yapay_zeka_verisi['malzemeler']:
-                    # Malzemeyi veritabanında bul veya yarat
-                    ing_obj, created = Ingredient.objects.get_or_create(name=malzeme_metni)
-
-                    # Tarife bağla
-                    RecipeIngredient.objects.create(
-                        recipe=yeni_tarif,
-                        ingredient=ing_obj,
-                        quantity=1,  # Varsayılan
-                        unit=""  # Varsayılan
-                    )
-
-                # 3. VERİTABANI ID'SİNİ JAVASCRIPT'E GÖNDER! (Artık 404 hatası yok)
-                yapay_zeka_verisi['recipe_id'] = str(yeni_tarif.id)
-
+            # Sadece ekrana gönderiyoruz, ikinci kez kaydetmeye çalışmıyoruz!
             return JsonResponse(yapay_zeka_verisi)
 
         except Exception as e:
-            # DEDEKTİF BURADA DEVREYE GİRİYOR
             print("\n" + "=" * 50)
             print("!!! YAPAY ZEKA VEYA KAYIT SİSTEMİ ÇÖKTÜ !!!")
-            traceback.print_exc()  # PyCharm terminaline kırmızı hatayı basar
+            traceback.print_exc()
             print("=" * 50 + "\n")
-
             return JsonResponse({"sohbet": "Mutfakta küçük bir kaza oldu, lütfen tekrar dene.", "malzemeler": []})

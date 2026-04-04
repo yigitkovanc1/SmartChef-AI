@@ -11,10 +11,14 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
 
     # 2. YANLIŞ ANLAŞILAN KELİMELERİ MİGROS'UN ANLAYACAĞI DİLE ÇEVİRME
     kelime_sozlugu = {
-        "tuz": "billur tuz",  # Bulaşık makinesi tuzu bulmasın diye
+        "tuz": "billur tuz",
         "şeker": "toz şeker",
-        "yağ": "sıvı yağ",
-        "un": "buğday unu"
+        "yağ": "ayçiçek yağı",  # Sıvı yağ gelirse direkt ayçiçek arayacak
+        "sıvı yağ": "ayçiçek yağı",
+        "pide": "lavaş",  # Migros pidede sapıtıyor, lavaş garanti
+        "biber": "çarliston biber",
+        "yeşil biber": "çarliston biber",
+        "salça": "domates salçası"
     }
 
     # BÜTÜN İŞLEMİ TEK DÖNGÜDE YAPIYORUZ
