@@ -1,8 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from .models import Recipe, Favorite
-
+from .models import Recipe, RecipeIngredient, Favorite
 
 @login_required
 def favori_toggle_view(request, recipe_id):
@@ -26,3 +25,23 @@ def anasayfa_view(request):
     # Veritabanından rastgele (?) 3 tarif çekiyoruz
     onerilen_tarifler = Recipe.objects.all().order_by('?')[:3]
     return render(request, 'home.html', {'onerilen_tarifler': onerilen_tarifler})
+
+
+@login_required(login_url='/hesap/giris/')
+def tarif_detay_view(request, recipe_id):
+    # Tarifi veritabanından bul, yoksa 404 hatası ver
+    tarif = get_object_or_404(Recipe, id=recipe_id)
+
+    # Tarife ait malzemeleri çek
+    malzemeler = RecipeIngredient.objects.filter(recipe=tarif)
+
+    # Bu tarif kullanıcının favorilerinde var mı kontrol et
+    is_favorite = Favorite.objects.filter(user=request.user, recipe=tarif).exists()
+
+    context = {
+        'tarif': tarif,
+        'malzemeler': malzemeler,
+        'is_favorite': is_favorite
+    }
+
+    return render(request, 'tarif_detay.html', context)

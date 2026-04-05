@@ -34,7 +34,6 @@
                         Şef {{ request.user.username }}
                     </span>
 
-                    <a href="/" class="btn btn-outline-secondary btn-sm me-2" style="border-radius: 8px;">Anasayfa</a>
                     <a href="/hesap/profil/" class="btn btn-outline-primary btn-sm me-2" style="border-radius: 8px;">Profilim</a>
                     <a href="/hesap/dashboard/" class="btn btn-outline-success btn-sm me-2" style="border-radius: 8px;">📊 Maliyetler</a>
 
@@ -108,19 +107,20 @@
                             </p>
                         </div>
                         <div class="card-footer bg-transparent border-0 pb-3 pt-0">
-                            <!-- Eğer tarif detay sayfan varsa buraya onun linkini (url tagi ile) koyabilirsin. Şimdilik Anasayfaya yönlendiriyor. -->
-                            <a href="/" class="btn btn-sm btn-outline-danger w-100 fw-bold" style="border-radius: 8px;">Mutfağa Dön & Sor</a>
+                            <!-- Tarife Git Butonu -->
+                            <a href="{% url 'tarif_detay' favori.recipe.id %}" class="btn btn-sm btn-outline-danger w-100 fw-bold" style="border-radius: 8px;">Tarife Git</a>
                         </div>
                     </div>
                 </div>
             {% empty %}
+                <!-- EĞER HİÇ FAVORİ YOKSA BU ÇIKACAK -->
                 <div class="col-12 text-center text-muted py-5">
                     <h1 style="font-size: 4rem; opacity: 0.5;">📝</h1>
                     <p class="fs-5 mt-3 fw-bold">Favori tarif defterin henüz boş.</p>
                     <p class="mb-4">Chat'ten bir tarif isteyip yıldıza tıklayarak koleksiyonunu oluşturabilirsin.</p>
-                    <a href="/" class="btn btn-danger px-4 py-2 shadow-sm" style="border-radius: 12px; font-weight: bold;">Tarif Keşfetmeye Başla</a>
+                    <a href="/chat/" class="btn btn-danger px-4 py-2 shadow-sm" style="border-radius: 12px; font-weight: bold;">Tarif Keşfetmeye Başla</a>
                 </div>
-            {% endfor %}
+            {% endfor %} <!-- 🚀 İŞTE DÜNYAYI KURTARAN O KAPANIŞ ETİKETİ -->
         </div>
     </div>
 

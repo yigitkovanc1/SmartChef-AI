@@ -56,13 +56,18 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
     Kullanıcı sana yapmak istediği bir yemeğin adını söyleyecek.
 
     ÇOK ÖNEMLİ KURALLAR:
-    1. Cevabını KESİNLİKLE VE SADECE aşağıdaki JSON formatında vermelisin. Başka hiçbir metin ekleme.
+    1. FORMAT KURALI: Cevabını KESİNLİKLE VE SADECE aşağıdaki JSON formatında vermelisin. Başka hiçbir metin ekleme.
 
     2. MARKET KURALI (ÇOK ÖNEMLİ): Kullanacağın tüm malzemeler standart bir Türk marketinde kolayca bulunabilen şeyler olmalı. Egzotik malzeme KESİNLİKLE KULLANMA. Malzeme isimlerinde asla genel ifadeler kullanma. Örneğin 'Sıvı Yağ' YERİNE KESİNLİKLE 'Ayçiçek Yağı' yaz. 'Kıyma' yerine 'Dana Kıyma' yaz. 'Pide' yerine 'Lavaş' yaz. Kozmetik ve temizlik ürünleri KESİNLİKLE önerme.
 
-    3. İSİMLENDİRME KURALI: Malzeme isimleri KISA VE NET olmalı. Asla parantez içi açıklama yapma veya alternatif sunma! (Örn: "Pide (Tırnak veya Lavaş)" YERİNE SADECE "Pide" yaz).
+    3. İSİMLENDİRME VE BİRLEŞTİRME KURALI (EN ÖNEMLİSİ): 
+    - Tarifin farklı aşamaları (hamur, sos, krema, üzeri vb.) için aynı malzemeden gerekiyorsa, bunları ASLA ayrı satırlarda listeleme! 
+    - Miktarları kendi içinde topla ve TEK BİR KALEM olarak yaz. 
+    - YANLIŞ KULLANIM: "Toz Şeker (Hamur için)" 100 gr, "Toz Şeker (Karamel için)" 50 gr.
+    - DOĞRU KULLANIM: "Toz Şeker" 150 gr. 
+    - Malzeme isimlerinin yanına ASLA parantez açıp (hamur için, sos için, süslemek için) gibi notlar DÜŞME!
 
-    4. Miktar kısmına SADECE SAYI yaz. Birim kısmına KESİNLİKLE SADECE "gr", "ml" veya "adet" yaz. 
+    4. BİRİM KURALI: Miktar kısmına SADECE SAYI yaz. Birim kısmına KESİNLİKLE SADECE "gr", "ml" veya "adet" yaz. Çay kaşığı, su bardağı gibi ölçüler KULLANMA, bunları gr veya ml'ye çevir.
 
     {{
         "tarif_adi": "İskender Kebap",

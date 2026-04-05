@@ -7,18 +7,36 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
     toplam_sepet_maliyeti = 0
 
     # 1. BEDAVA OLAN VEYA ARANMAYACAK MALZEMELER
-    yoksayilacaklar = ["su", "sıcak su", "soğuk su", "musluk suyu", "buz", "kaynar su"]
+    yoksayilacaklar = ["su", "sıcak su", "soğuk su", "musluk suyu", "buz", "kaynar su","Ilık Su"]
 
     # 2. YANLIŞ ANLAŞILAN KELİMELERİ MİGROS'UN ANLAYACAĞI DİLE ÇEVİRME
     kelime_sozlugu = {
         "tuz": "billur tuz",
-        "şeker": "toz şeker",
-        "yağ": "ayçiçek yağı",  # Sıvı yağ gelirse direkt ayçiçek arayacak
-        "sıvı yağ": "ayçiçek yağı",
-        "pide": "lavaş",  # Migros pidede sapıtıyor, lavaş garanti
+        "şeker": "migros toz şeker 1 kg",
+        "şeker (süt karışımı i̇çin)": "migros toz şeker 1 kg",
+        "şeker (karamel i̇çin)": "migros toz şeker 1 kg",
+        "yağ": "migros ayçiçek yağı 1 l",
+        "sıvı yağ": "migros ayçiçek yağı 1 l",
+        "pide": "lavaş",
         "biber": "çarliston biber",
         "yeşil biber": "çarliston biber",
-        "salça": "domates salçası"
+        "salça": "tat domates salçası",
+        "süt": "migros uht süt 1 l",
+        "vanilya": "dr.oetker şekerli vanilin",
+        "süt kreması": "tikveşli krema",
+        "süt kreması (karamel i̇çin)": "tikveşli krema",
+        "krema": "tikveşli krema",
+        "tereyağı": "migros tereyağı 250 g",
+        "pirinç": "yayla osmancık pirinç 1 kg",
+        "kıyma": "uzman kasap dana kıyma",
+        "un": "sinangil buğday unu 1 kg",
+        "kabartma tozu": "dr.oetker kabartma tozu",
+        "kakao": "Ülker Kakao",
+        "yumurta": "keskinoglu 15'li l büyük boy yumurta",
+        "yumurta sarısı": "keskinoglu 15'li l büyük boy yumurta",
+        "yumurta akı": "keskinoglu 15'li l büyük boy yumurta",
+        "Kedidili Bisküvi": "Balocco Savoiardı 200 G",
+        "kedi dili": "Balocco Savoiardı 200 G"
     }
 
     # BÜTÜN İŞLEMİ TEK DÖNGÜDE YAPIYORUZ
