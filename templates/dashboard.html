@@ -96,10 +96,10 @@
 </div>
 
         <div class="row">
-            <!-- Sol Taraf: Maliyet Fişleri Tablosu -->
+            <!-- Sol Taraf: Maliyet Fişleri Tablosu (Banka Dekontu Mantığı) -->
             <div class="col-lg-7 mb-4">
                 <div class="dashboard-card h-100">
-                    <h5 class="fw-bold mb-3">Hesaplama Geçmişi (Fişler)</h5>
+                    <h5 class="fw-bold mb-3">🧾 Son Hesaplama Fişleri</h5>
                     <div class="table-responsive">
                         <table class="table table-hover table-custom align-middle">
                             <thead>
@@ -129,100 +129,79 @@
                 </div>
             </div>
 
-            <!-- Sağ Taraf: Chart.js Çizgi Grafiği -->
+            <!-- Sağ Taraf: YENİ SÜTUN GRAFİĞİ (Tarif Karşılaştırması) -->
             <div class="col-lg-5 mb-4">
                 <div class="dashboard-card h-100 d-flex flex-column">
-                    <h5 class="fw-bold mb-3 text-center">📊 Porsiyon Maliyeti Trendi</h5>
+                    <h5 class="fw-bold mb-3 text-center">📊 Maliyet Ligi (Tarif Karşılaştırması)</h5>
                     <div style="flex-grow: 1; position: relative; min-height: 250px;">
-                        <!-- Canvas grafiğin çizileceği yerdir -->
-                        <canvas id="costChart"></canvas>
+                        <canvas id="comparisonChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- GRAFİK BEYNİ (JavaScript) -->
+    <!-- YENİ GRAFİK BEYNİ (JavaScript) -->
     <script>
-        // Django'dan gelen maliyet verilerini JavaScript dizisine çeviriyoruz
-        // Grafiğin soldan sağa (eskiden yeniye) akması için "reversed" kullanıyoruz
-        const rawData = [
-            {% for m in maliyetler reversed %}
-            {
-                tarih: "{{ m.tarih|date:'d M' }}",
-                tarif: "{{ m.recipe.title|escapejs }}",
-                // Virgüllü sayıları (ör: 145,50) JS'nin anlayacağı noktaya çeviriyoruz
-                maliyet: parseFloat("{{ m.porsiyon_maliyeti }}".replace(',', '.'))
-            },
+        // Üstteki tarif listesinden direkt isimleri ve son fiyatları çekiyoruz
+        const recipeNames = [
+            {% for item in tarif_listesi %}
+                "{{ item.recipe.title|escapejs }}",
             {% endfor %}
         ];
 
-        // Eğer veri yoksa grafiği boş göstermemek için
-        if (rawData.length > 0) {
-            // X Ekseni: Tarihler (Altında tarif adı yazar)
-            const etiketler = rawData.map(item => item.tarih);
+        const recipeCosts = [
+            {% for item in tarif_listesi %}
+                parseFloat("{{ item.son_maliyet.porsiyon_maliyeti }}".replace(',', '.')),
+            {% endfor %}
+        ];
 
-            // Y Ekseni: Maliyet Fiyatları
-            const veriler = rawData.map(item => item.maliyet);
+        const ctx = document.getElementById('comparisonChart').getContext('2d');
 
-            // Tarif isimlerini grafiğin üstüne gelince göstermek için ayırıyoruz
-            const tarifIsimleri = rawData.map(item => item.tarif);
-
-            const ctx = document.getElementById('costChart').getContext('2d');
-            const costChart = new Chart(ctx, {
-                type: 'line', // Çizgi grafiği
+        if (recipeNames.length > 0) {
+            new Chart(ctx, {
+                type: 'bar', // Çizgi (line) yerine Sütun (bar) grafiği yaptık!
                 data: {
-                    labels: etiketler,
+                    labels: recipeNames,
                     datasets: [{
                         label: 'Porsiyon Maliyeti (TL)',
-                        data: veriler,
-                        borderColor: '#ff6b6b', // SmartChef kırmızı/pembe teması
-                        backgroundColor: 'rgba(255, 107, 107, 0.2)', // Çizginin altındaki hafif gölge
-                        borderWidth: 3,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: '#ff6b6b',
-                        pointBorderWidth: 2,
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
-                        fill: true, // Altını boya
-                        tension: 0.4 // Çizgileri yumuşak/kıvrımlı yap (0 düz çizgi yapar)
+                        data: recipeCosts,
+                        backgroundColor: [
+                            'rgba(255, 107, 107, 0.7)', // Kırmızı
+                            'rgba(54, 162, 235, 0.7)',  // Mavi
+                            'rgba(255, 206, 86, 0.7)',  // Sarı
+                            'rgba(75, 192, 192, 0.7)',  // Yeşil
+                            'rgba(153, 102, 255, 0.7)'  // Mor
+                        ],
+                        borderColor: [
+                            '#ff6b6b', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8 // Sütunların üstünü hafif oval yapar (Premium görünüm)
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false }, // Üstteki açıklama kutusunu gizle (daha temiz durur)
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                // Fareyle üstüne gelince tarifin adını ve fiyatını göster
-                                title: function(context) {
-                                    return tarifIsimleri[context[0].dataIndex] + " (" + context[0].label + ")";
-                                },
-                                label: function(context) {
-                                    return context.parsed.y + ' ₺';
-                                }
+                                label: function(context) { return context.parsed.y + ' ₺'; }
                             }
                         }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: true, // Y ekseni 0'dan başlasın
-                            ticks: {
-                                callback: function(value) { return value + ' ₺'; }
-                            }
-                        }
+                        y: { beginAtZero: true }
                     }
                 }
             });
         } else {
-            // Eğer veritabanında henüz hiç maliyet kaydı yoksa
-            const ctx = document.getElementById('costChart').getContext('2d');
+            // Veri yoksa gösterilecek boş ekran
             ctx.font = "14px 'Segoe UI'";
             ctx.fillStyle = "#888";
             ctx.textAlign = "center";
-            ctx.fillText("Henüz hesaplanmış bir maliyet yok.", 200, 125);
-            ctx.fillText("Chat'ten bir tarifin maliyetini hesapla!", 200, 150);
+            ctx.fillText("Karşılaştırılacak tarif bulunamadı.", 200, 125);
         }
     </script>
 </body>

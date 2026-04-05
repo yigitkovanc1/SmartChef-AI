@@ -150,4 +150,10 @@ def dashboard_view(request):
     context = {
         'tarif_listesi': tarif_listesi
     }
+    maliyetler = MarketCost.objects.filter(user=request.user).order_by('-tarih')[:10]  # Son 10 işlem
+
+    context = {
+        'tarif_listesi': tarif_listesi,
+        'maliyetler': maliyetler,  # Bunu context'e eklediğinden emin ol!
+    }
     return render(request, 'dashboard.html', context)
