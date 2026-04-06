@@ -9,6 +9,10 @@ from markets.models import MarketCost
 from collections import defaultdict
 from recipes.models import Favorite
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.hashers import check_password
+from .models import PasswordHistory
 
 def kayit_ol_view(request):
     if request.method == 'POST':
@@ -157,3 +161,56 @@ def dashboard_view(request):
         'maliyetler': maliyetler,  # Bunu context'e eklediğinden emin ol!
     }
     return render(request, 'dashboard.html', context)
+
+
+# Diğer view fonksiyonlarının altına ekle:
+def sifre_degistir_view(request):
+    if request.method == 'POST':
+        eski_sifre = request.POST.get('eski_sifre')
+        yeni_sifre = request.POST.get('yeni_sifre')
+        yeni_sifre_tekrar = request.POST.get('yeni_sifre_tekrar')
+
+        # 1. KONTROL: Eski şifre doğru mu?
+        if not request.user.check_password(eski_sifre):
+            messages.error(request, "Mevcut şifrenizi yanlış girdiniz! Lütfen tekrar deneyin.")
+            return redirect('profil_sayfasi')
+
+        # 2. KONTROL: Yeni şifreler aynı mı? (Senin şifre sıfırlama stiline birebir uygun)
+        if yeni_sifre != yeni_sifre_tekrar:
+            messages.error(request, "Girdiğiniz yeni şifreler birbiriyle eşleşmiyor! Lütfen tekrar deneyin.")
+            return redirect('profil_sayfasi')
+
+        # 3. KONTROL: Yeni şifre, mevcut şifreyle aynı mı?
+        if request.user.check_password(yeni_sifre):
+            messages.error(request,
+                           "Girdiğiniz yeni şifre mevcut şifrenizle aynı olamaz. Lütfen farklı bir şifre belirleyin.")
+            return redirect('profil_sayfasi')
+
+        # 4. KONTROL: Yeni şifre son 2 şifreyle aynı mı?
+        try:
+            eski_sifreler = PasswordHistory.objects.filter(user=request.user).order_by('-id')[:2]
+            for gecmis in eski_sifreler:
+                if check_password(yeni_sifre, gecmis.password):
+                    messages.error(request,
+                                   "Yeni şifreniz son kullandığınız 2 şifreden biriyle aynı olamaz. Lütfen farklı bir şifre belirleyin.")
+                    return redirect('profil_sayfasi')
+        except Exception as e:
+            print(f"Şifre geçmişi kontrol edilemedi: {e}")
+
+        # Başarılı kayıt işlemleri
+        request.user.set_password(yeni_sifre)
+        request.user.save()
+
+        # Geçmişe kaydet
+        try:
+            PasswordHistory.objects.create(user=request.user, password=request.user.password)
+        except Exception as e:
+            print(f"Şifre geçmişe kaydedilemedi: {e}")
+
+        # Oturumun düşmesini engelle
+        update_session_auth_hash(request, request.user)
+
+        messages.success(request, "Şifreniz başarıyla güncellenmiştir.")
+        return redirect('profil_sayfasi')
+
+    return redirect('profil_sayfasi')

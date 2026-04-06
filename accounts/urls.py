@@ -12,5 +12,6 @@ urlpatterns = [
     path('profil/', views.profil_view, name='profil_sayfasi'),
     path('cikis/', auth_views.LogoutView.as_view(next_page='home'), name='cikis_yap'),
     path('dashboard/', views.dashboard_view, name='dashboard_sayfasi'),
+    path('sifre-degistir/', views.sifre_degistir_view, name='sifre_degistir'),
 ]
 

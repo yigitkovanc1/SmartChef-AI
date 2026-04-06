@@ -11,32 +11,53 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
 
     # 2. YANLIŞ ANLAŞILAN KELİMELERİ MİGROS'UN ANLAYACAĞI DİLE ÇEVİRME
     kelime_sozlugu = {
-        "tuz": "billur tuz",
-        "şeker": "migros toz şeker 1 kg",
-        "şeker (süt karışımı i̇çin)": "migros toz şeker 1 kg",
-        "şeker (karamel i̇çin)": "migros toz şeker 1 kg",
-        "yağ": "migros ayçiçek yağı 1 l",
-        "sıvı yağ": "migros ayçiçek yağı 1 l",
-        "pide": "lavaş",
-        "biber": "çarliston biber",
-        "yeşil biber": "çarliston biber",
-        "salça": "tat domates salçası",
+
+        # 1. TEMEL GIDALAR (Genel kelimeleri markaya zorluyoruz)
+        "sıvı yağ": "yudum ayçiçek yağı",
+        "ayçiçek yağı": "yudum ayçiçek yağı",
+        "un": "sinangil buğday unu",
+        "toz şeker": "ırmak toz şeker",
+        "şeker": "ırmak toz şeker",
+        "tuz": "billur tuz iyotlu",
+        "süt": "içim tam yağlı süt",
+        "tereyağı": "sütaş tereyağı",
+        "yumurta": "keskinoglu 15'li l büyük boy yumurta",
+        "yumurta sarısı": "keskinoglu 15'li l büyük boy yumurta",
+        "yumurta akı": "keskinoglu 15'li l büyük boy yumurta",
         "süt": "migros uht süt 1 l",
         "vanilya": "dr.oetker şekerli vanilin",
         "süt kreması": "tikveşli krema",
         "süt kreması (karamel i̇çin)": "tikveşli krema",
         "krema": "tikveşli krema",
-        "tereyağı": "migros tereyağı 250 g",
-        "pirinç": "yayla osmancık pirinç 1 kg",
-        "kıyma": "uzman kasap dana kıyma",
-        "un": "sinangil buğday unu 1 kg",
+
+        # 2. PASTACILIK VE KABARTICILAR (Migros bunları ayrı yazınca bulamaz)
         "kabartma tozu": "dr.oetker kabartma tozu",
-        "kakao": "Ülker Kakao",
-        "yumurta": "keskinoglu 15'li l büyük boy yumurta",
-        "yumurta sarısı": "keskinoglu 15'li l büyük boy yumurta",
-        "yumurta akı": "keskinoglu 15'li l büyük boy yumurta",
+        "vanilya": "dr.oetker şekerli vanilin",
+        "şekerli vanilin": "dr.oetker şekerli vanilin",
+        "kakao": "dr.oetker kakao",
+        "kuru maya": "dr.oetker kuru maya",
+        "yaş maya": "pakmaya yaş maya",
         "Kedidili Bisküvi": "Balocco Savoiardı 200 G",
-        "kedi dili": "Balocco Savoiardı 200 G"
+        "kedi dili": "Balocco Savoiardı 200 G",
+
+        # 3. KASAP VE ŞARKÜTERİ (Dana/Kuzu ayrımı yapmazsa kedi maması gelir 😂)
+        "kıyma": "uzman kasap dana kıyma",
+        "dana kıyma": "uzman kasap dana kıyma",
+        "tavuk göğsü": "banvit piliç göğüs",
+        "sucuk": "şahin dana sucuk",
+        "sosis": "pınar sosis",
+
+        # 4. SEBZE & BAKKALİYE
+        "salça": "tat domates salçası",
+        "domates salçası": "tat domates salçası",
+        "makarna": "filiz makarna",
+        "pirinç": "yayla osmancık pirinç",
+        "karabiber": "bağdat karabiber",
+        "pul biber": "bağdat pul biber",
+        "nane": "bağdat nane",
+        "pide": "lavaş",
+        "biber": "çarliston biber",
+        "yeşil biber": "çarliston biber",
     }
 
     # BÜTÜN İŞLEMİ TEK DÖNGÜDE YAPIYORUZ
