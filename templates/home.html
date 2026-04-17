@@ -17,35 +17,38 @@
 </head>
 <body>
 
-    <!-- YÖNLENDİRİCİ NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-custom py-3">
+    <nav class="navbar navbar-expand-lg navbar-custom py-3">
         <div class="container-fluid px-4">
             <a class="navbar-brand brand-text" href="/">🍽️ SmartChef AI</a>
 
-            <div class="ms-auto d-flex align-items-center">
-                <!-- Sadece kullanıcı giriş yaptıysa bu menüyü göster -->
+            <div class="ms-auto d-flex align-items-center gap-2">
                 {% if request.user.is_authenticated %}
-                    <span class="me-3 fw-bold text-muted">👨‍🍳 Şef {{ request.user.username }}</span>
-                    <a href="/" class="btn btn-outline-secondary btn-sm me-2" style="border-radius: 8px;">Anasayfa</a>
-                    <a href="/hesap/profil/" class="btn btn-outline-primary btn-sm me-2" style="border-radius: 8px;">Profilim</a>
-                <!-- YENİ EKLENEN DASHBOARD (MALİYETLER) BUTONU BURADA -->
-                    <a href="/hesap/dashboard/" class="btn btn-outline-success btn-sm me-2" style="border-radius: 8px;">📊 Maliyetler</a>
+                    <span class="me-3 fw-bold text-muted d-flex align-items-center">
+                        {% if request.user.profile.profile_picture %}
+                            <img src="{{ request.user.profile.profile_picture.url }}" class="rounded-circle me-2 shadow-sm" width="35" height="35" style="object-fit: cover; border: 2px solid #ff6b6b;" onerror="this.outerHTML='<span class=\'me-2 fs-4\'>👨‍🍳</span>'">
+                        {% else %}
+                            <span class="me-2 fs-4">👨‍🍳</span>
+                        {% endif %}
+                        Şef {{ request.user.username }}
+                    </span>
 
-                    <!-- İŞTE ÇIKIŞ BUTONU BURADA -->
+                    <a href="/" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🏠 Ana Sayfa</a>
+                    <a href="/hesap/profil/" class="btn btn-outline-info btn-sm fw-bold shadow-sm" style="border-radius: 8px;">👤 Profilim</a>
+                    <a href="/hesap/dashboard/" class="btn btn-outline-success btn-sm fw-bold shadow-sm" style="border-radius: 8px;">📊 Maliyetler</a>
+                    <button onclick="history.back()" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🔙 Geri Dön</button>
+
                     <form action="{% url 'cikis_yap' %}" method="post" style="display: inline; margin: 0;">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger btn-sm" style="border-radius: 8px;">Güvenli Çıkış</button>
+                        <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🚪 Çıkış</button>
                     </form>
                 {% else %}
-                    <!-- Kullanıcı giriş yapmadıysa -->
-                    <a href="/hesap/giris/" class="btn btn-primary btn-sm me-2" style="border-radius: 8px;">Giriş Yap</a>
-                    <a href="/hesap/kayit/" class="btn btn-outline-primary btn-sm" style="border-radius: 8px;">Kayıt Ol</a>
+                    <a href="/hesap/giris/" class="btn btn-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">Giriş Yap</a>
+                    <a href="/hesap/kayit/" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">Kayıt Ol</a>
                 {% endif %}
             </div>
         </div>
     </nav>
 
-    <!-- KAHRAMAN BÖLÜMÜ (HERO) -->
     <div class="hero-section container">
         <h1 class="display-4 fw-bold" style="color: #333;">Mutfağındaki Yapay Zeka Şefin</h1>
         <p class="lead text-muted mt-4 mb-5 col-md-8 mx-auto">
@@ -55,7 +58,6 @@
             <a href="/chat/" class="btn btn-custom shadow">Hemen Pişirmeye Başla 🍳</a>
         </div>
     </div>
-<!-- ÖNERİLEN TARİFLER BÖLÜMÜ -->
     <div class="container mt-5 mb-5">
         <h2 class="text-center mb-5 fw-bold" style="color: #333;">🔥 Günün Şef Önerileri</h2>
         <div class="row">
@@ -63,12 +65,9 @@
             <div class="col-md-4 mb-4">
                 <div class="card h-100 shadow-sm border-0" style="border-radius: 15px; overflow: hidden; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
 
-                    <!-- YENİ EKLENEN FOTOĞRAF KISMI BURASI -->
                     {% if tarif.image %}
-                        <!-- Veritabanında fotoğraf varsa onu gösterir -->
                         <img src="{{ tarif.image.url }}" class="card-img-top" alt="{{ tarif.title }}" style="height: 200px; object-fit: cover;">
                     {% else %}
-                        <!-- Veritabanında fotoğraf yoksa şık bir yer tutucu (placeholder) gösterir -->
                         <div style="height: 200px; background: linear-gradient(135deg, #ff6b6b, #fa5252); display: flex; align-items: center; justify-content: center; color: white;">
                             <h1 style="font-size: 4rem; margin: 0;">🍽️</h1>
                         </div>
@@ -81,7 +80,6 @@
                         </p>
                     </div>
                     <div class="card-footer bg-white border-0 pb-4 text-center">
-                        <!-- ✅ BURADAKİ LİNKİ GÜNCELLEDİK! Artık chat'e değil detay sayfasına atacak -->
                         <a href="{% url 'tarif_detay' tarif.id %}" class="btn btn-outline-danger btn-sm" style="border-radius: 10px; padding: 8px 20px;">Tarife Git</a>
                     </div>
                 </div>

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maliyet Analizi - SmartChef</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Chart.js Grafikleri İçin -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, sans-serif; }
@@ -20,19 +19,33 @@
 </head>
 <body>
 
-    <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-custom py-3 mb-4">
         <div class="container-fluid px-4">
             <a class="navbar-brand brand-text" href="/">🍽️ SmartChef AI</a>
-            <div class="ms-auto d-flex align-items-center">
+
+            <div class="ms-auto d-flex align-items-center gap-2">
                 {% if request.user.is_authenticated %}
-                    <span class="me-3 fw-bold text-muted">👨‍🍳 Şef {{ request.user.username }}</span>
-                    <a href="/" class="btn btn-outline-secondary btn-sm me-2" style="border-radius: 8px;">Anasayfa</a>
-                    <a href="/hesap/profil/" class="btn btn-outline-primary btn-sm me-2" style="border-radius: 8px;">Profilim</a>
+                    <span class="me-3 fw-bold text-muted d-flex align-items-center">
+                        {% if request.user.profile.profile_picture %}
+                            <img src="{{ request.user.profile.profile_picture.url }}" class="rounded-circle me-2 shadow-sm" width="35" height="35" style="object-fit: cover; border: 2px solid #ff6b6b;" onerror="this.outerHTML='<span class=\'me-2 fs-4\'>👨‍🍳</span>'">
+                        {% else %}
+                            <span class="me-2 fs-4">👨‍🍳</span>
+                        {% endif %}
+                        Şef {{ request.user.username }}
+                    </span>
+
+                    <a href="/" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🏠 Ana Sayfa</a>
+                    <a href="/hesap/profil/" class="btn btn-outline-info btn-sm fw-bold shadow-sm" style="border-radius: 8px;">👤 Profilim</a>
+                    <a href="/hesap/dashboard/" class="btn btn-outline-success btn-sm fw-bold shadow-sm" style="border-radius: 8px;">📊 Maliyetler</a>
+                    <button onclick="history.back()" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🔙 Geri Dön</button>
+
                     <form action="{% url 'cikis_yap' %}" method="post" style="display: inline; margin: 0;">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger btn-sm" style="border-radius: 8px;">Güvenli Çıkış</button>
+                        <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🚪 Çıkış</button>
                     </form>
+                {% else %}
+                    <a href="/hesap/giris/" class="btn btn-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">Giriş Yap</a>
+                    <a href="/hesap/kayit/" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">Kayıt Ol</a>
                 {% endif %}
             </div>
         </div>
@@ -43,7 +56,8 @@
 
     <div class="row">
         {% for item in tarif_listesi %}
-        <div class="col-lg-6 mb-4"> <div class="dashboard-card h-100">
+        <div class="col-lg-6 mb-4">
+            <div class="dashboard-card h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="fw-bold text-secondary m-0">🥘 {{ item.recipe.title }}</h5>
                     <span class="cost-badge">{{ item.son_maliyet.porsiyon_maliyeti }} ₺</span>
@@ -93,10 +107,8 @@
         </div>
         {% endfor %}
     </div>
-</div>
 
         <div class="row">
-            <!-- Sol Taraf: Maliyet Fişleri Tablosu (Banka Dekontu Mantığı) -->
             <div class="col-lg-7 mb-4">
                 <div class="dashboard-card h-100">
                     <h5 class="fw-bold mb-3">🧾 Son Hesaplama Fişleri</h5>
@@ -129,7 +141,6 @@
                 </div>
             </div>
 
-            <!-- Sağ Taraf: YENİ SÜTUN GRAFİĞİ (Tarif Karşılaştırması) -->
             <div class="col-lg-5 mb-4">
                 <div class="dashboard-card h-100 d-flex flex-column">
                     <h5 class="fw-bold mb-3 text-center">📊 Maliyet Ligi (Tarif Karşılaştırması)</h5>
@@ -141,7 +152,6 @@
         </div>
     </div>
 
-    <!-- YENİ GRAFİK BEYNİ (JavaScript) -->
     <script>
         // Üstteki tarif listesinden direkt isimleri ve son fiyatları çekiyoruz
         const recipeNames = [

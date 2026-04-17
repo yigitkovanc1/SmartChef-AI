@@ -15,44 +15,48 @@
 </head>
 <body>
 
-
-    <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-custom py-3">
         <div class="container-fluid px-4">
             <a class="navbar-brand brand-text" href="/">🍽️ SmartChef AI</a>
 
-            <!-- YENİ DÜZENLENMİŞ SAĞ ÜST MENÜ -->
             <div class="ms-auto d-flex align-items-center gap-2">
-                <a href="/" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">
-                    🏠 Ana Sayfa
-                </a>
-                <a href="/hesap/profil/" class="btn btn-outline-info btn-sm fw-bold shadow-sm" style="border-radius: 8px;">
-                    👤 Profilim
-                </a>
-                <a href="/hesap/dashboard/" class="btn btn-outline-success btn-sm fw-bold shadow-sm" style="border-radius: 8px;">
-                    📊 Maliyetler
-                </a>
-                <!-- Geri Dön butonunu tarayıcı geçmişine bağladık, nereden geldiyse oraya döner -->
-                <button onclick="history.back()" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">
-                    🔙 Geri Dön
-                </button>
+                {% if request.user.is_authenticated %}
+                    <span class="me-3 fw-bold text-muted d-flex align-items-center">
+                        {% if request.user.profile.profile_picture %}
+                            <img src="{{ request.user.profile.profile_picture.url }}" class="rounded-circle me-2 shadow-sm" width="35" height="35" style="object-fit: cover; border: 2px solid #ff6b6b;" onerror="this.outerHTML='<span class=\'me-2 fs-4\'>👨‍🍳</span>'">
+                        {% else %}
+                            <span class="me-2 fs-4">👨‍🍳</span>
+                        {% endif %}
+                        Şef {{ request.user.username }}
+                    </span>
+
+                    <a href="/" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🏠 Ana Sayfa</a>
+                    <a href="/hesap/profil/" class="btn btn-outline-info btn-sm fw-bold shadow-sm" style="border-radius: 8px;">👤 Profilim</a>
+                    <a href="/hesap/dashboard/" class="btn btn-outline-success btn-sm fw-bold shadow-sm" style="border-radius: 8px;">📊 Maliyetler</a>
+                    <button onclick="history.back()" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🔙 Geri Dön</button>
+
+                    <form action="{% url 'cikis_yap' %}" method="post" style="display: inline; margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🚪 Çıkış</button>
+                    </form>
+                {% else %}
+                    <a href="/hesap/giris/" class="btn btn-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">Giriş Yap</a>
+                    <a href="/hesap/kayit/" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">Kayıt Ol</a>
+                {% endif %}
             </div>
         </div>
     </nav>
 
-    <!-- TARİF BAŞLIĞI -->
     <div class="recipe-header text-center shadow-sm">
         <div class="container">
             <h1 class="fw-bold">{{ tarif.title }}</h1>
             <p class="mb-4 text-white-50">SmartChef Yapay Zeka Mutfağından...</p>
 
             <div class="d-flex justify-content-center gap-3">
-                <!-- YENİ MİGROS BOTU BUTONU -->
                 <button id="maliyetBtn" onclick="botuAtesle('{{ tarif.id }}')" class="btn btn-light text-success fw-bold px-4" style="border-radius: 20px;">
                     💰 Migros Maliyeti Hesapla
                 </button>
 
-                <!-- FAVORİ BUTONU -->
                 <button id="favBtn" onclick="toggleFavorite('{{ tarif.id }}')" class="btn {% if is_favorite %}btn-warning text-dark{% else %}btn-outline-light{% endif %} fw-bold px-4" style="border-radius: 20px;">
                     {% if is_favorite %}⭐ Favorilerden Çıkar{% else %}☆ Favorilere Ekle{% endif %}
                 </button>
@@ -60,10 +64,8 @@
         </div>
     </div>
 
-    <!-- TARİF İÇERİĞİ -->
     <div class="container mb-5">
         <div class="row">
-            <!-- Sol Taraf: Malzemeler -->
             <div class="col-md-4 mb-4">
                 <div class="content-card h-100">
                     <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
@@ -104,22 +106,18 @@
                 </div>
             </div>
 
-            <!-- Sağ Taraf: Yapılışı (Sohbet Metni) -->
             <div class="col-md-8 mb-4">
                 <div class="content-card h-100">
                     <h4 class="fw-bold text-dark border-bottom pb-2 mb-3">👨‍🍳 Şefin Tarifi</h4>
                     <div class="text-muted" style="line-height: 1.8; white-space: pre-wrap;">{{ tarif.instructions }}</div>
 
-                    <!-- FİŞİN ÇIKACAĞI YER BURASI (Başlangıçta gizli/yok) -->
                     <div id="migrosFisiKutusu" class="mt-4"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- JAVASCRIPT KODLARI -->
     <script>
-        // FAVORİ KODU AYNEN DURUYOR
         function toggleFavorite(recipeId) {
             fetch(`/favori-yap/${recipeId}/`, {
                 method: 'POST',
@@ -146,17 +144,14 @@
             .catch(error => console.error('Hata:', error));
         }
 
-        // YENİ: MİGROS BOTUNU ARKA PLANDA ÇALIŞTIRAN SİHİRLİ KOD 🚀
-      let porsiyonCarpani = 1;
+        let porsiyonCarpani = 1;
 
-        // 1. DİNAMİK PORSİYON HESAPLAYICI
         function porsiyonDegistir(degisim) {
-            if (porsiyonCarpani + degisim < 1) return; // Çarpan 1'in altına düşemez
+            if (porsiyonCarpani + degisim < 1) return;
 
             porsiyonCarpani += degisim;
             document.getElementById('porsiyonSayaci').innerText = porsiyonCarpani + 'x';
 
-            // Ekrandaki tüm gramajları anında güncelliyoruz
             const satirlar = document.querySelectorAll('.malzeme-satiri');
             satirlar.forEach(satir => {
                 const badge = satir.querySelector('.miktar-badge');
@@ -164,28 +159,23 @@
 
                 if (!isNaN(orijinalMiktar)) {
                     let yeniMiktar = orijinalMiktar * porsiyonCarpani;
-                    // Eğer sayı tam sayıysa noktasız yaz (Örn: 2), değilse tek basamaklı (Örn: 1.5)
                     let formatliMiktar = Number.isInteger(yeniMiktar) ? yeniMiktar : yeniMiktar.toFixed(1);
                     satir.querySelector('.gosterilen-miktar').innerText = formatliMiktar;
                 }
             });
         }
 
-        // 2. YENİ AKILLI MİGROS BOTU
         function botuAtesle(recipeId) {
             const btn = document.getElementById('maliyetBtn');
             const sonucKutusu = document.getElementById('migrosFisiKutusu');
 
-            // Kullanıcının seçtiği ve çarptığı malzemeleri toplayalım
             let secilenMalzemeler = [];
             document.querySelectorAll('.malzeme-satiri').forEach(satir => {
                 let evdeVar = satir.querySelector('.evde-var-check').checked;
 
-                // Eğer "Evde Var" işaretli DEĞİLSE bota gönder (Çünkü eksik olanları alacağız)
                 if (!evdeVar) {
                     const badge = satir.querySelector('.miktar-badge');
                     let guncelMiktar = parseFloat(satir.querySelector('.gosterilen-miktar').innerText);
-                    // Eğer metin girdiyse (Örn: "Bir tutam") orijinali koru
                     if (isNaN(guncelMiktar)) guncelMiktar = badge.getAttribute('data-orijinal-miktar');
 
                     secilenMalzemeler.push({
@@ -196,7 +186,6 @@
                 }
             });
 
-            // Şefim eğer her şeye "Evde Var" dediyse bota gitmeye gerek yok!
             if (secilenMalzemeler.length === 0) {
                 sonucKutusu.innerHTML = `
                     <div class="alert alert-success border-0 shadow-sm mt-3" style="border-radius: 15px;">
@@ -205,7 +194,6 @@
                 return;
             }
 
-            // Normal loading UI
             btn.innerHTML = '⏳ Hesaplanıyor... (Çırak Reyonlarda)';
             btn.disabled = true;
             sonucKutusu.innerHTML = `
@@ -213,7 +201,6 @@
                     Sadece evde OLMAYAN ${secilenMalzemeler.length} ürün aranıyor... Porsiyon Çarpanı: ${porsiyonCarpani}x
                 </div>`;
 
-            // YENİ: Artık GET değil, POST atıyoruz. Paketi biz veriyoruz.
             fetch(`/market/hesapla/api/${recipeId}/`, {
                 method: 'POST',
                 headers: {
@@ -227,48 +214,44 @@
                 btn.innerHTML = '💰 Migros Maliyeti Hesapla';
                 btn.disabled = false;
 
-                // tarif_detay.html içindeki botuAtesle fonksiyonunun sonuç kısmını (if data.durum === 'basarili' bloğunu) güncelle:
+                if (data.durum === 'basarili') {
+                    let fisHTML = `
+                        <div class="card border-0 shadow-sm mt-3" style="border-radius: 15px; border: 1px solid #e0e0e0 !important;">
+                            <div class="card-header bg-success text-white fw-bold py-3" style="border-radius: 15px 15px 0 0;">
+                                🧾 Tahmini Migros Maliyeti (Sadece Eksikler)
+                            </div>
+                            <ul class="list-group list-group-flush">`;
 
-if (data.durum === 'basarili') {
-    let fisHTML = `
-        <div class="card border-0 shadow-sm mt-3" style="border-radius: 15px; border: 1px solid #e0e0e0 !important;">
-            <div class="card-header bg-success text-white fw-bold py-3" style="border-radius: 15px 15px 0 0;">
-                🧾 Tahmini Migros Maliyeti (Sadece Eksikler)
-            </div>
-            <ul class="list-group list-group-flush">`;
+                    data.malzemeler.forEach(urun => {
+                        let ikon = urun.bulundu ? '✅' : '❌';
+                        let renk = urun.bulundu ? 'text-dark' : 'text-danger text-decoration-line-through';
+                        fisHTML += `
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-3 ${renk}">
+                                <span>${ikon} <span style="font-size: 0.95rem;">${urun.market_isim || urun.isim}</span></span>
+                                <span class="fw-bold text-nowrap ms-3">${urun.bulundu ? urun.sepet_fiyat + ' TL' : 'Bulunamadı'}</span>
+                            </li>`;
+                    });
 
-    // Botun bulduğu eksikleri listele
-    data.malzemeler.forEach(urun => {
-        let ikon = urun.bulundu ? '✅' : '❌';
-        let renk = urun.bulundu ? 'text-dark' : 'text-danger text-decoration-line-through';
-        fisHTML += `
-            <li class="list-group-item d-flex justify-content-between align-items-center py-3 ${renk}">
-                <span>${ikon} <span style="font-size: 0.95rem;">${urun.market_isim || urun.isim}</span></span>
-                <span class="fw-bold text-nowrap ms-3">${urun.bulundu ? urun.sepet_fiyat + ' TL' : 'Bulunamadı'}</span>
-            </li>`;
-    });
+                    fisHTML += `
+                            </ul>
+                            <div class="card-footer bg-light border-top-0 py-3" style="border-radius: 0 0 15px 15px;">
+                                <div class="d-flex justify-content-between text-muted small mb-1">
+                                    <span>Market Sepeti Toplamı (Eksikler):</span>
+                                    <span>${data.toplam_sepet} TL</span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="d-block fw-bold text-dark">Eksiklerin Porsiyon Maliyeti:</span>
+                                        <small class="text-muted">Evdeki malzemeler hariç hesaplanmıştır.</small>
+                                    </div>
+                                    <span class="fs-4 fw-bold text-danger">${data.toplam_tarif_maliyeti} TL</span>
+                                </div>
+                            </div>
+                        </div>`;
 
-    // Fişin Alt Kısmı - Maliyet Detayları
-    fisHTML += `
-            </ul>
-            <div class="card-footer bg-light border-top-0 py-3" style="border-radius: 0 0 15px 15px;">
-                <div class="d-flex justify-content-between text-muted small mb-1">
-                    <span>Market Sepeti Toplamı (Eksikler):</span>
-                    <span>${data.toplam_sepet} TL</span>
-                </div>
-                <hr class="my-2">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="d-block fw-bold text-dark">Eksiklerin Porsiyon Maliyeti:</span>
-                        <small class="text-muted">Evdeki malzemeler hariç hesaplanmıştır.</small>
-                    </div>
-                    <span class="fs-4 fw-bold text-danger">${data.toplam_tarif_maliyeti} TL</span>
-                </div>
-            </div>
-        </div>`;
-
-    sonucKutusu.innerHTML = fisHTML;
-} else {
+                    sonucKutusu.innerHTML = fisHTML;
+                } else {
                     sonucKutusu.innerHTML = `<div class="alert alert-danger border-0 shadow-sm mt-3" style="border-radius: 15px;">❌ Hata: ${data.mesaj}</div>`;
                 }
             })
