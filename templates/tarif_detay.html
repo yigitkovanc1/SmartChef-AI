@@ -66,14 +66,36 @@
             <!-- Sol Taraf: Malzemeler -->
             <div class="col-md-4 mb-4">
                 <div class="content-card h-100">
-                    <h4 class="fw-bold text-dark border-bottom pb-2 mb-3">🛒 Malzemeler</h4>
-                    <ul class="list-group list-group-flush">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h4 class="fw-bold text-dark m-0">🛒 Malzemeler</h4>
+
+                        <div class="d-flex align-items-center bg-light px-2 py-1" style="border-radius: 10px; border: 1px solid #e0e0e0;">
+                            <button onclick="porsiyonDegistir(-1)" class="btn btn-sm btn-light text-danger fw-bold py-0 px-2">-</button>
+                            <span id="porsiyonSayaci" class="fw-bold mx-2 text-dark" style="font-size: 0.9rem;">1x</span>
+                            <button onclick="porsiyonDegistir(1)" class="btn btn-sm btn-light text-success fw-bold py-0 px-2">+</button>
+                        </div>
+                    </div>
+
+                    <p class="text-muted small mb-3">Evde olan malzemeleri işaretle, bot sadece eksikleri hesaplasın.</p>
+
+                    <ul class="list-group list-group-flush" id="malzemeListesi">
                         {% for malzeme in malzemeler %}
-                            <li class="list-group-item bg-transparent px-0 border-0">
-                                <span class="badge bg-danger bg-opacity-10 text-danger me-2" style="font-size: 14px;">
-                                    {{ malzeme.quantity }} {{ malzeme.unit }}
-                                </span>
-                                <span class="fw-semibold">{{ malzeme.ingredient.name|title }}</span>
+                            <li class="list-group-item bg-transparent px-0 border-0 d-flex justify-content-between align-items-center malzeme-satiri">
+                                <div class="d-flex align-items-center">
+                                    <div class="form-check me-2 m-0 custom-checkbox">
+                                        <input class="form-check-input evde-var-check border-secondary shadow-sm" type="checkbox" id="chk_{{ forloop.counter }}" style="cursor: pointer; width: 1.2rem; height: 1.2rem;">
+                                    </div>
+
+                                    <span class="badge bg-danger bg-opacity-10 text-danger me-2 miktar-badge"
+                                          data-orijinal-miktar="{{ malzeme.quantity }}"
+                                          data-birim="{{ malzeme.unit }}"
+                                          data-isim="{{ malzeme.ingredient.name }}">
+                                        <span class="gosterilen-miktar">{{ malzeme.quantity }}</span> {{ malzeme.unit }}
+                                    </span>
+                                    <label class="fw-semibold m-0" for="chk_{{ forloop.counter }}" style="cursor: pointer; user-select: none;">
+                                        {{ malzeme.ingredient.name|title }}
+                                    </label>
+                                </div>
                             </li>
                         {% empty %}
                             <li class="list-group-item bg-transparent text-muted">Malzeme listesi bulunamadı.</li>
@@ -125,88 +147,136 @@
         }
 
         // YENİ: MİGROS BOTUNU ARKA PLANDA ÇALIŞTIRAN SİHİRLİ KOD 🚀
+      let porsiyonCarpani = 1;
+
+        // 1. DİNAMİK PORSİYON HESAPLAYICI
+        function porsiyonDegistir(degisim) {
+            if (porsiyonCarpani + degisim < 1) return; // Çarpan 1'in altına düşemez
+
+            porsiyonCarpani += degisim;
+            document.getElementById('porsiyonSayaci').innerText = porsiyonCarpani + 'x';
+
+            // Ekrandaki tüm gramajları anında güncelliyoruz
+            const satirlar = document.querySelectorAll('.malzeme-satiri');
+            satirlar.forEach(satir => {
+                const badge = satir.querySelector('.miktar-badge');
+                let orijinalMiktar = parseFloat(badge.getAttribute('data-orijinal-miktar'));
+
+                if (!isNaN(orijinalMiktar)) {
+                    let yeniMiktar = orijinalMiktar * porsiyonCarpani;
+                    // Eğer sayı tam sayıysa noktasız yaz (Örn: 2), değilse tek basamaklı (Örn: 1.5)
+                    let formatliMiktar = Number.isInteger(yeniMiktar) ? yeniMiktar : yeniMiktar.toFixed(1);
+                    satir.querySelector('.gosterilen-miktar').innerText = formatliMiktar;
+                }
+            });
+        }
+
+        // 2. YENİ AKILLI MİGROS BOTU
         function botuAtesle(recipeId) {
             const btn = document.getElementById('maliyetBtn');
             const sonucKutusu = document.getElementById('migrosFisiKutusu');
 
-            // Tıklanınca botun reyonlarda gezdiğini belli edelim
+            // Kullanıcının seçtiği ve çarptığı malzemeleri toplayalım
+            let secilenMalzemeler = [];
+            document.querySelectorAll('.malzeme-satiri').forEach(satir => {
+                let evdeVar = satir.querySelector('.evde-var-check').checked;
+
+                // Eğer "Evde Var" işaretli DEĞİLSE bota gönder (Çünkü eksik olanları alacağız)
+                if (!evdeVar) {
+                    const badge = satir.querySelector('.miktar-badge');
+                    let guncelMiktar = parseFloat(satir.querySelector('.gosterilen-miktar').innerText);
+                    // Eğer metin girdiyse (Örn: "Bir tutam") orijinali koru
+                    if (isNaN(guncelMiktar)) guncelMiktar = badge.getAttribute('data-orijinal-miktar');
+
+                    secilenMalzemeler.push({
+                        isim: badge.getAttribute('data-isim'),
+                        miktar: guncelMiktar,
+                        birim: badge.getAttribute('data-birim')
+                    });
+                }
+            });
+
+            // Şefim eğer her şeye "Evde Var" dediyse bota gitmeye gerek yok!
+            if (secilenMalzemeler.length === 0) {
+                sonucKutusu.innerHTML = `
+                    <div class="alert alert-success border-0 shadow-sm mt-3" style="border-radius: 15px;">
+                        🎉 <strong>Harika!</strong> Bütün malzemeler evde var. Bu yemeğin sana market maliyeti <strong>0 TL!</strong>
+                    </div>`;
+                return;
+            }
+
+            // Normal loading UI
             btn.innerHTML = '⏳ Hesaplanıyor... (Çırak Reyonlarda)';
             btn.disabled = true;
             sonucKutusu.innerHTML = `
                 <div class="alert alert-success bg-success bg-opacity-10 border-0 text-success fw-bold p-3" style="border-radius: 15px;">
-                    Mutfak çırakları senin için sanal reyonlardan en taze fiyatları topluyor şef, yemeğin altını kıs ve biraz bekle...
+                    Sadece evde OLMAYAN ${secilenMalzemeler.length} ürün aranıyor... Porsiyon Çarpanı: ${porsiyonCarpani}x
                 </div>`;
 
-            // Arka planda Django API'sine istek atalım
-            fetch(`/market/hesapla/api/${recipeId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    // Butonu eski haline getir
-                    btn.innerHTML = '💰 Migros Maliyeti Hesapla';
-                    btn.disabled = false;
+            // YENİ: Artık GET değil, POST atıyoruz. Paketi biz veriyoruz.
+            fetch(`/market/hesapla/api/${recipeId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ malzemeler: secilenMalzemeler })
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.innerHTML = '💰 Migros Maliyeti Hesapla';
+                btn.disabled = false;
 
-                    // Eğer bot başarıyla döndüyse jilet gibi bir fiş çiz
-                    if (data.durum === 'basarili') {
-                        let fisHTML = `
-                            <div class="card border-0 shadow-sm mt-3" style="border-radius: 15px; border: 1px solid #e0e0e0 !important;">
-                                <div class="card-header bg-success text-white fw-bold py-3" style="border-radius: 15px 15px 0 0;">
-                                    🧾 Tahmini Migros Maliyeti
-                                </div>
-                                <ul class="list-group list-group-flush">`;
+                // tarif_detay.html içindeki botuAtesle fonksiyonunun sonuç kısmını (if data.durum === 'basarili' bloğunu) güncelle:
 
-                        // YENİ: data.malzemeler olarak güncelledik!
-                        if(data.malzemeler && data.malzemeler.length > 0) {
-                            data.malzemeler.forEach(urun => {
-                                let ikon = urun.bulundu ? '✅' : '❌';
-                                let renk = urun.bulundu ? 'text-dark' : 'text-danger text-decoration-line-through';
+if (data.durum === 'basarili') {
+    let fisHTML = `
+        <div class="card border-0 shadow-sm mt-3" style="border-radius: 15px; border: 1px solid #e0e0e0 !important;">
+            <div class="card-header bg-success text-white fw-bold py-3" style="border-radius: 15px 15px 0 0;">
+                🧾 Tahmini Migros Maliyeti (Sadece Eksikler)
+            </div>
+            <ul class="list-group list-group-flush">`;
 
-                                // YENİ: market_isim ve sepet_fiyat olarak güncelledik!
-                                let gosterilecek_isim = urun.bulundu ? urun.market_isim : urun.isim;
-                                let fiyat = urun.bulundu ? `${urun.sepet_fiyat} TL` : '<span class="text-muted small">Bulunamadı</span>';
+    // Botun bulduğu eksikleri listele
+    data.malzemeler.forEach(urun => {
+        let ikon = urun.bulundu ? '✅' : '❌';
+        let renk = urun.bulundu ? 'text-dark' : 'text-danger text-decoration-line-through';
+        fisHTML += `
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3 ${renk}">
+                <span>${ikon} <span style="font-size: 0.95rem;">${urun.market_isim || urun.isim}</span></span>
+                <span class="fw-bold text-nowrap ms-3">${urun.bulundu ? urun.sepet_fiyat + ' TL' : 'Bulunamadı'}</span>
+            </li>`;
+    });
 
-                                fisHTML += `
-                                    <li class="list-group-item d-flex justify-content-between align-items-center py-3 ${renk}">
-                                        <span>${ikon} <span style="font-size: 0.95rem;">${gosterilecek_isim}</span></span>
-                                        <span class="fw-bold text-nowrap ms-3">${fiyat}</span>
-                                    </li>`;
-                            });
-                        } else {
-                            fisHTML += `<li class="list-group-item text-muted">Ürün detayı bulunamadı.</li>`;
-                        }
+    // Fişin Alt Kısmı - Maliyet Detayları
+    fisHTML += `
+            </ul>
+            <div class="card-footer bg-light border-top-0 py-3" style="border-radius: 0 0 15px 15px;">
+                <div class="d-flex justify-content-between text-muted small mb-1">
+                    <span>Market Sepeti Toplamı (Eksikler):</span>
+                    <span>${data.toplam_sepet} TL</span>
+                </div>
+                <hr class="my-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="d-block fw-bold text-dark">Eksiklerin Porsiyon Maliyeti:</span>
+                        <small class="text-muted">Evdeki malzemeler hariç hesaplanmıştır.</small>
+                    </div>
+                    <span class="fs-4 fw-bold text-danger">${data.toplam_tarif_maliyeti} TL</span>
+                </div>
+            </div>
+        </div>`;
 
-                        // Fişin Alt Kısmı (Toplamlar)
-                        fisHTML += `
-                                </ul>
-                                <div class="card-footer bg-light border-top-0 py-3" style="border-radius: 0 0 15px 15px;">
-                                    <div class="d-flex justify-content-between text-muted small mb-2">
-                                        <span>Market Sepeti Toplamı:</span>
-                                        <span>${data.toplam_sepet} TL</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fs-5 fw-bold text-dark">Porsiyon Maliyeti:</span>
-                                        <span class="fs-4 fw-bold text-danger">${data.toplam_tarif_maliyeti} TL</span>
-                                    </div>
-                                </div>
-                            </div>`;
-
-                        sonucKutusu.innerHTML = fisHTML;
-                    } else {
-                        // Eğer API hata döndürdüyse
-                        sonucKutusu.innerHTML = `
-                            <div class="alert alert-danger border-0 shadow-sm mt-3" style="border-radius: 15px;">
-                                ❌ Hata: ${data.mesaj}
-                            </div>`;
-                    }
-                })
-                .catch(error => {
-                    btn.innerHTML = '💰 Migros Maliyeti Hesapla';
-                    btn.disabled = false;
-                    sonucKutusu.innerHTML = `
-                        <div class="alert alert-danger border-0 shadow-sm mt-3" style="border-radius: 15px;">
-                            ❌ Market bağlantısında bir sorun oluştu.
-                        </div>`;
-                    console.error('Bot Çöktü:', error);
-                });
+    sonucKutusu.innerHTML = fisHTML;
+} else {
+                    sonucKutusu.innerHTML = `<div class="alert alert-danger border-0 shadow-sm mt-3" style="border-radius: 15px;">❌ Hata: ${data.mesaj}</div>`;
+                }
+            })
+            .catch(error => {
+                btn.innerHTML = '💰 Migros Maliyeti Hesapla';
+                btn.disabled = false;
+                sonucKutusu.innerHTML = `<div class="alert alert-danger border-0 mt-3" style="border-radius: 15px;">❌ Market bağlantısında bir sorun oluştu.</div>`;
+            });
         }
     </script>
 </body>

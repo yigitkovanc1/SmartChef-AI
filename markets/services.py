@@ -46,6 +46,7 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "tavuk göğsü": "banvit piliç göğüs",
         "sucuk": "şahin dana sucuk",
         "sosis": "pınar sosis",
+        "tereyağı": "sütaş tereyağı 250 g",
 
         # 4. SEBZE & BAKKALİYE
         "salça": "tat domates salçası",
