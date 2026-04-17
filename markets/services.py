@@ -47,6 +47,11 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "sucuk": "şahin dana sucuk",
         "sosis": "pınar sosis",
         "tereyağı": "sütaş tereyağı 250 g",
+        "tavuk göğsü": "piliç bonfile",
+        "tavuk göğüs": "piliç bonfile",
+        "kemiksiz tavuk göğsü": "piliç bonfile",
+        "kuşbaşı tavuk": "piliç sote",
+        "tavuk kalça": "piliç incik",
 
         # 4. SEBZE & BAKKALİYE
         "salça": "tat domates salçası",
@@ -59,6 +64,9 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "pide": "lavaş",
         "biber": "çarliston biber",
         "yeşil biber": "çarliston biber",
+        "sarımsak": "kuru sarımsak file",
+        "diş sarımsak": "kuru sarımsak file",
+        "baş sarımsak": "kuru sarımsak file",
     }
 
     # BÜTÜN İŞLEMİ TEK DÖNGÜDE YAPIYORUZ

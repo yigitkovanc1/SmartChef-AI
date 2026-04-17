@@ -10,39 +10,44 @@ import re
 def benzer_tarif_bul(aranan_isim):
     """
     Regex kullanarak süs kelimelerini tamamen yok eder ve gelişmiş benzerlik taraması yapar.
+    Kaşarlı Menemen ile Menemen'i ayırır, İskender ile İskender Kebap'ı bağlar.
     """
     if not aranan_isim:
         return None
 
     aranan_isim = aranan_isim.lower().strip()
 
-    # 1. AŞAMA: Regex ile kelime avı! (\b sınırlandırıcıdır, sadece tam kelimeleri yakalar)
-    silinecekler = r'\b(tarifi|tarif|tarifleri|yemeği|ev yapımı|kolay|pratik|lezzetli|nefis|klasik|orijinal|özel|usulü)\b'
-    aranan_isim = re.sub(silinecekler, '', aranan_isim).strip()
+    # 1. AŞAMA: Süs kelimelerini çöp kutusuna at
+    silinecekler = r'\b(bana|bir|tarifi|tarif|tarifleri|yemeği|ev yapımı|kolay|pratik|lezzetli|nefis|klasik|orijinal|özel|usulü|nasıl|yapılır|istiyorum|ver)\b'
+    temiz_isim = re.sub(silinecekler, '', aranan_isim).strip()
+    temiz_isim = " ".join(temiz_isim.split())
 
-    # Kelimeler silinince ortada kalan "çift boşlukları" tek boşluğa indirgiyoruz.
-    aranan_isim = " ".join(aranan_isim.split())
+    if not temiz_isim:
+        return None
 
-    # 2. AŞAMA: Doğrudan veya İçinde Geçme Kontrolü (Django icontains)
-    kolay_eslesme = Recipe.objects.filter(title__icontains=aranan_isim).first()
-    if kolay_eslesme:
-        return kolay_eslesme
-
-    # 3. AŞAMA: Yapay Zeka Benzerlik Oranı ve Çapraz Kontrol
     tum_tarifler = Recipe.objects.all()
+
+    # 2. AŞAMA: KESİN EŞLEŞME (Menemen = Menemen)
+    # Önce birebir aynı ismi taşıyan var mı diye bakarız.
     for t in tum_tarifler:
-        db_isim = t.title.lower()
-
-        # Ekstra Güvenlik: Eğer aranan kelime veritabanındakinin içinde geçiyorsa veya tam tersiyse yakala
-        if db_isim in aranan_isim or aranan_isim in db_isim:
+        db_isim = t.title.lower().replace('*', '').strip()
+        if db_isim == temiz_isim:
             return t
 
-        # Difflib ile %75 benzerlik ölçümü (Harf hataları için: örn. Hambürger)
-        benzerlik_orani = difflib.SequenceMatcher(None, aranan_isim, db_isim).ratio()
-        if benzerlik_orani >= 0.75:
+    # 3. AŞAMA: BAŞLANGIÇ VE BENZERLİK EŞLEŞMESİ (İskender = İskender Kebap)
+    # Eğer kullanıcı "Menemen" yazdıysa, "Kaşarlı Menemen"in BAŞLANGICI "Menemen" olmadığı için onu es geçer!
+    # Ama kullanıcı "İskender" yazdıysa, "İskender Kebap"ın BAŞLANGICI "İskender" olduğu için yakalar!
+    for t in tum_tarifler:
+        db_isim = t.title.lower().replace('*', '').strip()
+
+        if db_isim.startswith(temiz_isim) or temiz_isim.startswith(db_isim):
             return t
 
-    # Eğer hiçbir şeye uymadıysa, bu gerçekten yepyeni bir yemektir!
+        # Difflib ile %80 benzerlik ölçümü (Ufak harf hataları için: örn. Hmbürger)
+        benzerlik_orani = difflib.SequenceMatcher(None, temiz_isim, db_isim).ratio()
+        if benzerlik_orani >= 0.80:
+            return t
+
     return None
 
 def gemini_ile_sohbet_et(user, session_id, user_message):

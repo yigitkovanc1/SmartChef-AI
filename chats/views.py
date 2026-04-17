@@ -3,13 +3,15 @@ from django.contrib.auth.decorators import login_required
 import json
 import uuid
 from django.http import JsonResponse
-from .services import gemini_ile_sohbet_et
+from .services import gemini_ile_sohbet_et, benzer_tarif_bul  # YENİ: Arama motorunu dahil ettik
 import traceback
 from recipes.models import Recipe, RecipeIngredient
+
 
 @login_required(login_url='giris_yap')
 def chat_sayfasi_view(request):
     return render(request, 'chat.html')
+
 
 @login_required(login_url='giris_yap')
 def chat_api_view(request):
@@ -23,15 +25,9 @@ def chat_api_view(request):
             session_id = request.session['chat_session_id']
 
             # ==========================================
-            # 1. HAFIZA KONTROLÜ (Daha önce aynı tarifi konuştuk mu?)
+            # 1. AKILLI HAFIZA KONTROLÜ (Services.py'daki zekayı kullanıyoruz)
             # ==========================================
-            mesaj_kucuk = kullanici_mesaji.lower()
-            mevcut_tarif = None
-
-            for tarif in Recipe.objects.all():
-                if tarif.title.lower() in mesaj_kucuk:
-                    mevcut_tarif = tarif
-                    break
+            mevcut_tarif = benzer_tarif_bul(kullanici_mesaji)
 
             if mevcut_tarif:
                 malzemeler_query = RecipeIngredient.objects.filter(recipe=mevcut_tarif)
@@ -45,11 +41,9 @@ def chat_api_view(request):
                 })
 
             # ==========================================
-            # 2. YAPAY ZEKAYA SOR (Bütün kaydetme işini services.py yapıyor!)
+            # 2. YAPAY ZEKAYA SOR (Hata Buradaydı, Geri Getirdik!)
             # ==========================================
             yapay_zeka_verisi = gemini_ile_sohbet_et(request.user, session_id, kullanici_mesaji)
-
-            # Sadece ekrana gönderiyoruz, ikinci kez kaydetmeye çalışmıyoruz!
             return JsonResponse(yapay_zeka_verisi)
 
         except Exception as e:
@@ -58,3 +52,6 @@ def chat_api_view(request):
             traceback.print_exc()
             print("=" * 50 + "\n")
             return JsonResponse({"sohbet": "Mutfakta küçük bir kaza oldu, lütfen tekrar dene.", "malzemeler": []})
+
+    # Eğer GET isteği atılırsa güvenlik kalkanı
+    return JsonResponse({"sohbet": "Bu adrese sadece POST isteği atılabilir.", "malzemeler": []}, status=405)

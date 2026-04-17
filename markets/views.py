@@ -5,25 +5,35 @@ from recipes.models import Recipe
 import json
 import traceback
 from .models import MarketCost
-
+from recipes.models import Recipe, RecipeIngredient
 
 @login_required(login_url='/hesap/giris/')
 def maliyet_hesapla_api(request, recipe_id):
-    # EĞER İSTEK POST İLE GELDİYSE (Yani bizim yeni zeki Javascript'imizden geldiyse)
     if request.method == 'POST':
         try:
             recipe = Recipe.objects.get(id=recipe_id)
-
-            # 1. Zarfı (Paketi) Aç! Front-end'den gelen JSON verisini okuyoruz.
             data = json.loads(request.body)
-            ai_listesi = data.get('malzemeler', [])
 
-            print(f"\n[DEDEKTİF] Kullanıcının seçtiği EKSİK ve ÇARPILMIŞ malzeme listesi: {ai_listesi}")
+            # 'malzemeler' listesini al, eğer Javascript boş gönderdiyse None yap
+            ai_listesi = data.get('malzemeler', None)
 
-            # 2. MİGROS BOTUNU ATEŞLE (Direkt kullanıcının gönderdiği listeyle!)
+            # ==========================================
+            # CHAT SAYFASI İÇİN YEDEK PLAN (ZIRH)
+            # ==========================================
+            if ai_listesi is None:
+                print("\n[DEDEKTİF] Chat'ten gelindi! Malzemeler veritabanından çekiliyor...")
+                ingredients = RecipeIngredient.objects.filter(recipe=recipe)
+                ai_listesi = []
+                for m in ingredients:
+                    ai_listesi.append({
+                        'isim': m.ingredient.name,
+                        'miktar': m.quantity,
+                        'birim': m.unit
+                    })
+
+            # 2. MİGROS BOTUNU ATEŞLE
             sonuclar = migros_maliyet_hesapla(ai_listesi)
 
-            # 3. Sonuç başarılıysa Veritabanına "Muhasebe Kaydı" at
             if sonuclar.get('durum') == 'basarili':
                 MarketCost.objects.create(
                     user=request.user,
@@ -32,7 +42,6 @@ def maliyet_hesapla_api(request, recipe_id):
                     porsiyon_maliyeti=sonuclar['toplam_tarif_maliyeti']
                 )
 
-            print(f"[DEDEKTİF] Bottan dönen sonuç: {sonuclar}")
             return JsonResponse(sonuclar)
 
         except Recipe.DoesNotExist:
@@ -45,5 +54,4 @@ def maliyet_hesapla_api(request, recipe_id):
             print("=" * 50 + "\n")
             return JsonResponse({'durum': 'hata', 'mesaj': str(e)}, status=500)
 
-    # Eğer birisi tarayıcıdan direkt linke girmeye çalışırsa (GET) reddet
     return JsonResponse({'durum': 'hata', 'mesaj': 'Bu adrese sadece POST isteği atılabilir.'}, status=405)

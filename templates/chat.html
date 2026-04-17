@@ -129,8 +129,8 @@
                 const actionDiv = document.createElement('div');
                 actionDiv.className = 'mt-2 mb-3 d-flex gap-2';
                 actionDiv.innerHTML = `
-                    <button class="btn btn-sm btn-outline-warning shadow-sm fw-bold" onclick="toggleFavori('${data.recipe_id}', this)">⭐ Favorilere Ekle</button>
-                    <button class="btn btn-sm btn-outline-success shadow-sm fw-bold" onclick="maliyetHesapla('${data.recipe_id}', this)">💰 Maliyet Hesapla</button>
+                    <button type="button" class="btn btn-sm btn-outline-warning shadow-sm fw-bold" onclick="toggleFavori('${data.recipe_id}', this)">⭐ Favorilere Ekle</button>
+                    <button type="button" class="btn btn-sm btn-outline-success shadow-sm fw-bold" onclick="maliyetHesapla('${data.recipe_id}', this)">💰 Maliyet Hesapla</button>
                 `;
                 chatBox.insertBefore(actionDiv, loadingBtn);
             }
@@ -143,12 +143,21 @@
         }
     });
 
+    // 1. GÜNCEL MALİYET HESAPLAMA FONKSİYONU
     async function maliyetHesapla(recipeId, btnElement) {
         btnElement.disabled = true;
-        btnElement.innerHTML = '🔄 Hesaplanıyor...';
+        btnElement.innerHTML = '🔄 Hesaplanıyor... (Çırak Reyonlarda)';
 
         try {
-            const res = await fetch(`/market/hesapla/${recipeId}/`); // Başında ve sonunda / olmasına dikkat!
+            const res = await fetch(`/market/hesapla/api/${recipeId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({})
+            });
+
             const data = await res.json();
 
             if (data.durum === "basarili") {
@@ -161,7 +170,7 @@
 
                 data.malzemeler.forEach(m => {
                     if (m.bulundu) {
-                        maliyetHTML += `<tr><td>✅ ${m.market_isim}</td><td class="text-end text-nowrap"><b>${m.tarif_maliyet} TL</b></td></tr>`;
+                        maliyetHTML += `<tr><td>✅ ${m.market_isim || m.isim}</td><td class="text-end text-nowrap"><b>${m.sepet_fiyat} TL</b></td></tr>`;
                     } else {
                         maliyetHTML += `<tr><td class="text-muted">❌ ${m.isim}</td><td class="text-end text-muted small">Bulunamadı</td></tr>`;
                     }
@@ -194,22 +203,32 @@
         }
     }
 
+    // 2. EKSİK OLAN YILDIZLAMA FONKSİYONU EKLENDİ
     async function toggleFavori(recipeId, btnElement) {
         try {
-            const res = await fetch(`/tarifler/favori-yap/${recipeId}/`);
+            const res = await fetch(`/tarifler/favori-yap/${recipeId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json'
+                }
+            });
             const data = await res.json();
-            if (data.is_favorite) {
-                btnElement.innerHTML = '🌟 Favorilerimde';
-                btnElement.classList.replace('btn-outline-warning', 'btn-warning');
-            } else {
-                btnElement.innerHTML = '⭐ Favorilere Ekle';
-                btnElement.classList.replace('btn-warning', 'btn-outline-warning');
+            if (data.status === 'ok') {
+                if (data.is_favorite) {
+                    btnElement.innerHTML = '🌟 Favorilerimde';
+                    btnElement.classList.replace('btn-outline-warning', 'btn-warning');
+                } else {
+                    btnElement.innerHTML = '⭐ Favorilere Ekle';
+                    btnElement.classList.replace('btn-warning', 'btn-outline-warning');
+                }
             }
         } catch (err) {
             console.error("Favori hatası:", err);
         }
     }
 
+    // 3. EKSİK OLAN MESAJ YAZDIRMA FONKSİYONU EKLENDİ
     function createMessageElement(text, className, senderName) {
         const div = document.createElement('div');
         div.className = `message ${className}`;
@@ -217,6 +236,7 @@
         return div;
     }
 
+    // 4. EKSİK OLAN AŞAĞI KAYDIRMA FONKSİYONU EKLENDİ
     function scrollToBottom() {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
