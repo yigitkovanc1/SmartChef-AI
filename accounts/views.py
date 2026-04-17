@@ -14,6 +14,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.hashers import check_password
 from .models import PasswordHistory
 
+
 def kayit_ol_view(request):
     if request.method == 'POST':
         kullanici_adi = request.POST.get('kullanici_adi')
@@ -211,6 +212,24 @@ def sifre_degistir_view(request):
         update_session_auth_hash(request, request.user)
 
         messages.success(request, "Şifreniz başarıyla güncellenmiştir.")
+        return redirect('profil_sayfasi')
+
+    return redirect('profil_sayfasi')
+
+
+@login_required(login_url='giris_yap')  # Güvenlik: Sadece giriş yapanlar değiştirebilir
+def bio_guncelle_view(request):
+    if request.method == 'POST':
+        # .strip() komutu çok hayat kurtarır! Kullanıcı kazara sadece boşluk
+        # tuşuna basıp gönderdiyse o görünmez boşlukları temizler.
+        yeni_bio = request.POST.get('bio', '').strip()
+
+        # Kullanıcının profiline ulaşıp bio'yu güncelliyoruz
+        profile = request.user.profile
+        profile.bio = yeni_bio
+        profile.save()
+
+        messages.success(request, "Biyografin başarıyla güncellendi şefim!")
         return redirect('profil_sayfasi')
 
     return redirect('profil_sayfasi')
