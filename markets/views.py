@@ -14,14 +14,16 @@ def maliyet_hesapla_api(request, recipe_id):
             recipe = Recipe.objects.get(id=recipe_id)
             data = json.loads(request.body)
 
-            # 'malzemeler' listesini al, eğer Javascript boş gönderdiyse None yap
-            ai_listesi = data.get('malzemeler', None)
+            # Javascript'ten gelen listeyi alıyoruz
+            ai_listesi = data.get('malzemeler')
 
             # ==========================================
-            # CHAT SAYFASI İÇİN YEDEK PLAN (ZIRH)
+            # CHAT SAYFASI İÇİN YEDEK PLAN (ZIRH GÜNCELLENDİ)
             # ==========================================
+            # Artık "None" mu diye değil, Javascript hiç malzeme listesi yollamadıysa (Örn: Postman'den geldiyse) diye kontrol ediyoruz.
+            # Eğer adam her şeyi işaretleyip (boş liste []) yolladıysa bu if'e GİRMEYECEK, sıfır lira hesaplayacak!
             if ai_listesi is None:
-                print("\n[DEDEKTİF] Chat'ten gelindi! Malzemeler veritabanından çekiliyor...")
+                print("\n[DEDEKTİF] Eski sistemden gelindi! Malzemeler veritabanından çekiliyor...")
                 ingredients = RecipeIngredient.objects.filter(recipe=recipe)
                 ai_listesi = []
                 for m in ingredients:
@@ -31,7 +33,16 @@ def maliyet_hesapla_api(request, recipe_id):
                         'birim': m.unit
                     })
 
-            # 2. MİGROS BOTUNU ATEŞLE
+            # Eğer adam tüm checkbox'ları işaretlediyse (Liste boş []) Market botunu yormadan direkt 0 dön!
+            if ai_listesi == []:
+                 return JsonResponse({
+                    'durum': 'basarili',
+                    'toplam_sepet': 0,
+                    'toplam_tarif_maliyeti': 0,
+                    'malzemeler': []
+                })
+
+            # 2. MİGROS BOTUNU ATEŞLE (Sadece eksiklerle)
             sonuclar = migros_maliyet_hesapla(ai_listesi)
 
             if sonuclar.get('durum') == 'basarili':

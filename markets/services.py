@@ -13,8 +13,8 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
     kelime_sozlugu = {
 
         # 1. TEMEL GIDALAR (Genel kelimeleri markaya zorluyoruz)
-        "sıvı yağ": "yudum ayçiçek yağı",
-        "ayçiçek yağı": "yudum ayçiçek yağı",
+        "sıvı yağ": "Migros Ayçiçek Yağı 5 L",
+        "ayçiçek yağı": "Migros Ayçiçek Yağı 5 L",
         "un": "sinangil buğday unu",
         "toz şeker": "ırmak toz şeker",
         "şeker": "ırmak toz şeker",
@@ -29,6 +29,7 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "süt kreması": "tikveşli krema",
         "süt kreması (karamel i̇çin)": "tikveşli krema",
         "krema": "tikveşli krema",
+        "yoğurt": "Sütaş Kaymaksız Yoğurt 1000 G",
 
         # 2. PASTACILIK VE KABARTICILAR (Migros bunları ayrı yazınca bulamaz)
         "kabartma tozu": "dr.oetker kabartma tozu",

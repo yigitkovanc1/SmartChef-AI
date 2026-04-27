@@ -90,7 +90,7 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
         # ==========================================
         # YENİ: İNATÇI DÖNGÜ (503 Koruması)
         # ==========================================
-        for deneme in range(3):
+        for deneme in range(5):  # Şansımızı 3'ten 5'e çıkardık!
             try:
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
@@ -98,11 +98,14 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
                 )
                 break  # Başarılı olursa döngüden anında çık
             except Exception as api_hata:
-                if "503" in str(api_hata) and deneme < 2:
-                    print(f"⏳ Google meşgul. 2 saniye sonra tekrar deneniyor... (Deneme {deneme + 1})")
-                    time.sleep(2)
+                if "503" in str(api_hata) and deneme < 4:
+                    # Bekleme süresini her denemede artır: 3sn -> 6sn -> 9sn -> 12sn
+                    bekleme_suresi = (deneme + 1) * 3
+                    print(
+                        f"⏳ Google fena tıkalı. {bekleme_suresi} saniye nefes alıp tekrar saldırıyoruz... (Deneme {deneme + 1}/5)")
+                    time.sleep(bekleme_suresi)
                 else:
-                    raise api_hata  # 3 kere denedik hala olmadıysa veya başka hataysa fırlat
+                    raise api_hata  # 5 kere denedik hala olmadıysa fırlat
 
         raw_text = response.text.strip()
         if raw_text.startswith("```json"):

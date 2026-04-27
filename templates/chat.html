@@ -11,7 +11,7 @@
         .brand-text { color: #ff6b6b; font-weight: 800; font-size: 1.5rem; text-decoration: none;}
 
         .chat-container { flex-grow: 1; overflow-y: auto; padding: 2rem; display: flex; flex-direction: column; gap: 1rem; }
-        .message { max-width: 75%; padding: 1rem 1.5rem; border-radius: 20px; font-size: 1.05rem; line-height: 1.5; animation: fadeIn 0.3s ease-in-out;}
+        .message { max-width: 85%; padding: 1rem 1.5rem; border-radius: 20px; font-size: 1.05rem; line-height: 1.5; animation: fadeIn 0.3s ease-in-out;}
         .msg-user { background-color: #ff6b6b; color: white; align-self: flex-end; border-bottom-right-radius: 5px; }
         .msg-ai { background-color: white; color: #333; align-self: flex-start; border-bottom-left-radius: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee;}
 
@@ -24,8 +24,36 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .typing-indicator { display: none; align-self: flex-start; background-color: white; padding: 1rem 1.5rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); color: #888; font-style: italic;}
 
-        /* Maliyet Kartı Özel Tasarımı */
+        /* Maliyet Kartı & Checkbox Özel Tasarımı */
         .maliyet-card { border-left: 5px solid #198754 !important; max-width: 450px; }
+        .ingredient-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 15px; /* Malzeme ismi ile buton arasına çelik bariyer! */
+        }
+        .ingredient-text {
+            font-weight: 500;
+            font-size: 0.95rem;
+            flex: 1; /* Alanı esnek kullan ama butonu sıkıştırma */
+            word-break: break-word; /* Çok uzun kelimeler alt satıra insin */
+        }
+        .evde-var-check { cursor: pointer; transform: scale(1.2); accent-color: #28a745; margin-right: 8px;}
+        .evde-var-label {
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            white-space: nowrap; /* Butonun yazısı ASLA alt alta kaymasın */
+            flex-shrink: 0; /* Ekran daralsa da butonu asla küçültme! */
+        }
+
+        .ingredient-item.strikethrough .ingredient-text { text-decoration: line-through; color: #adb5bd; }
     </style>
 </head>
 <body>
@@ -33,7 +61,6 @@
     <nav class="navbar navbar-expand-lg navbar-custom py-3">
         <div class="container-fluid px-4">
             <a class="navbar-brand brand-text" href="/">🍽️ SmartChef AI</a>
-
             <div class="ms-auto d-flex align-items-center gap-2">
                 {% if request.user.is_authenticated %}
                     <span class="me-3 fw-bold text-muted d-flex align-items-center">
@@ -44,12 +71,10 @@
                         {% endif %}
                         Şef {{ request.user.username }}
                     </span>
-
                     <a href="/" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🏠 Ana Sayfa</a>
                     <a href="/hesap/profil/" class="btn btn-outline-info btn-sm fw-bold shadow-sm" style="border-radius: 8px;">👤 Profilim</a>
                     <a href="/hesap/dashboard/" class="btn btn-outline-success btn-sm fw-bold shadow-sm" style="border-radius: 8px;">📊 Maliyetler</a>
                     <button onclick="history.back()" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🔙 Geri Dön</button>
-
                     <form action="{% url 'cikis_yap' %}" method="post" style="display: inline; margin: 0;">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🚪 Çıkış</button>
@@ -87,6 +112,16 @@
     const chatBox = document.getElementById('chatBox');
     const loadingBtn = document.getElementById('loadingBtn');
 
+    // Checkbox işaretlendiğinde yazının üstünü çizme efekti
+    function toggleStrikethrough(checkbox) {
+        const itemDiv = checkbox.closest('.ingredient-item');
+        if (checkbox.checked) {
+            itemDiv.classList.add('strikethrough');
+        } else {
+            itemDiv.classList.remove('strikethrough');
+        }
+    }
+
     chatForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const messageText = userInput.value.trim();
@@ -116,13 +151,29 @@
                 chatBox.insertBefore(createMessageElement(data.sohbet, 'msg-ai', '👨‍🍳 SmartChef:'), loadingBtn);
             }
 
+            // YENİ: Malzemeleri "Evde Var" Checkbox'larıyla Ekrana Basma
+            // YENİ: Malzemeleri "Evde Var" Checkbox'larıyla Ekrana Basma
             if (data.malzemeler && data.malzemeler.length > 0) {
-                let malzemeHTML = "<ul style='margin-top: 10px; margin-bottom: 0; padding-left: 20px; font-weight: 500;'>";
-                data.malzemeler.forEach(function(item) {
-                    malzemeHTML += `<li style="margin-bottom: 5px;">${item}</li>`;
+                let malzemeHTML = `<div class="mt-2" id="malzeme-listesi-${data.recipe_id}">`;
+
+                data.malzemeler.forEach(function(item, index) {
+                    // API'den gelen string veriyi parçalıyoruz
+                    const parcalar = item.split(" ");
+                    const miktar = parcalar[0];
+                    const birim = parcalar[1];
+                    const isim = parcalar.slice(2).join(" ");
+
+                    malzemeHTML += `
+                        <div class="ingredient-item">
+                            <span class="ingredient-text">🛒 ${item}</span>
+                            <label class="evde-var-label">
+                                <input type="checkbox" class="evde-var-check" onchange="toggleStrikethrough(this)" data-isim="${isim}" data-miktar="${miktar}" data-birim="${birim}">
+                                🏠 Evde Var
+                            </label>
+                        </div>`;
                 });
-                malzemeHTML += "</ul>";
-                chatBox.insertBefore(createMessageElement("<b style='color:#ff6b6b;'>🛒 Gerekli Malzemeler:</b>" + malzemeHTML, 'msg-ai', '📋 Reçete Sistemi:'), loadingBtn);
+                malzemeHTML += "</div>";
+                chatBox.insertBefore(createMessageElement("<b style='color:#ff6b6b;'>📋 Gerekli Malzemeler (Eksikleri Belirle):</b>" + malzemeHTML, 'msg-ai', ''), loadingBtn);
             }
 
             if (data.recipe_id) {
@@ -130,7 +181,7 @@
                 actionDiv.className = 'mt-2 mb-3 d-flex gap-2';
                 actionDiv.innerHTML = `
                     <button type="button" class="btn btn-sm btn-outline-warning shadow-sm fw-bold" onclick="toggleFavori('${data.recipe_id}', this)">⭐ Favorilere Ekle</button>
-                    <button type="button" class="btn btn-sm btn-outline-success shadow-sm fw-bold" onclick="maliyetHesapla('${data.recipe_id}', this)">💰 Maliyet Hesapla</button>
+                    <button type="button" class="btn btn-sm btn-outline-success shadow-sm fw-bold" onclick="maliyetHesapla('${data.recipe_id}', this)">💰 Eksiklerin Maliyetini Hesapla</button>
                 `;
                 chatBox.insertBefore(actionDiv, loadingBtn);
             }
@@ -143,10 +194,33 @@
         }
     });
 
-    // 1. GÜNCEL MALİYET HESAPLAMA FONKSİYONU
+    // YENİ: SADECE EKSİKLERİ TOPLAYIP GÖNDEREN MALİYET HESAPLAMA
     async function maliyetHesapla(recipeId, btnElement) {
+        // 1. Sadece "Evde Var" kutucuğu İŞARETLENMEMİŞ olanları bul (Yani eksikleri bul)
+        const eksikMalzemeler = [];
+        const listeDiv = document.getElementById(`malzeme-listesi-${recipeId}`);
+
+        if (listeDiv) {
+            const checkboxlar = listeDiv.querySelectorAll('.evde-var-check');
+            checkboxlar.forEach(cb => {
+                if (!cb.checked) { // Eğer evde yoksa listeye ekle
+                    eksikMalzemeler.push({
+                        isim: cb.getAttribute('data-isim'),
+                        miktar: parseFloat(cb.getAttribute('data-miktar')) || 1,
+                        birim: cb.getAttribute('data-birim')
+                    });
+                }
+            });
+        }
+
+        // Eğer her şey evde varsa boşuna markete gitme!
+        if (eksikMalzemeler.length === 0) {
+            alert("Harika Şef! Gerekli tüm malzemeler evde var. Senin için maliyet 0 TL! 🎉");
+            return;
+        }
+
         btnElement.disabled = true;
-        btnElement.innerHTML = '🔄 Hesaplanıyor... (Çırak Reyonlarda)';
+        btnElement.innerHTML = '🔄 Eksikler Reyonlarda Aranıyor...';
 
         try {
             const res = await fetch(`/market/hesapla/api/${recipeId}/`, {
@@ -155,7 +229,10 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 },
-                body: JSON.stringify({})
+                body: JSON.stringify({
+                    // Javascript artık boş obje değil, eksikler listesini Python'a yolluyor!
+                    malzemeler: eksikMalzemeler
+                })
             });
 
             const data = await res.json();
@@ -164,7 +241,7 @@
                 let maliyetHTML = `
                     <div class="card mt-2 shadow-sm maliyet-card">
                         <div class="card-body p-3">
-                            <h6 class="card-title text-success fw-bold">💰 Tahmini Migros Maliyeti</h6>
+                            <h6 class="card-title text-success fw-bold">💰 Eksiklerin Migros Maliyeti</h6>
                             <table class="table table-sm table-borderless mb-0" style="font-size: 0.85rem;">
                                 <tbody>`;
 
@@ -181,10 +258,10 @@
                             </table>
                             <hr class="my-2">
                             <div class="d-flex justify-content-between fw-bold text-dark">
-                                <span>Porsiyon Maliyeti:</span>
+                                <span>Alınacakların Toplam Maliyeti:</span>
                                 <span class="text-danger" style="font-size: 1.1rem;">${data.toplam_tarif_maliyeti} TL</span>
                             </div>
-                            <div class="text-muted mt-1" style="font-size: 0.75rem;">🛒 Market Sepeti Toplamı: ${data.toplam_sepet} TL</div>
+                            <div class="text-muted mt-1" style="font-size: 0.75rem;">🛒 Kasa Toplamı (Market Sepeti): ${data.toplam_sepet} TL</div>
                         </div>
                     </div>`;
 
@@ -193,17 +270,16 @@
             } else {
                 alert("Hata: " + (data.mesaj || "Bilinmeyen bir hata oluştu."));
                 btnElement.disabled = false;
-                btnElement.innerHTML = '💰 Maliyet Hesapla';
+                btnElement.innerHTML = '💰 Eksiklerin Maliyetini Hesapla';
             }
         } catch (err) {
             console.error(err);
             alert("Market botu şimdilik çevrimdışı, sonra tekrar dene şef!");
             btnElement.disabled = false;
-            btnElement.innerHTML = '💰 Maliyet Hesapla';
+            btnElement.innerHTML = '💰 Eksiklerin Maliyetini Hesapla';
         }
     }
 
-    // 2. EKSİK OLAN YILDIZLAMA FONKSİYONU EKLENDİ
     async function toggleFavori(recipeId, btnElement) {
         try {
             const res = await fetch(`/tarifler/favori-yap/${recipeId}/`, {
@@ -228,7 +304,6 @@
         }
     }
 
-    // 3. EKSİK OLAN MESAJ YAZDIRMA FONKSİYONU EKLENDİ
     function createMessageElement(text, className, senderName) {
         const div = document.createElement('div');
         div.className = `message ${className}`;
@@ -236,7 +311,6 @@
         return div;
     }
 
-    // 4. EKSİK OLAN AŞAĞI KAYDIRMA FONKSİYONU EKLENDİ
     function scrollToBottom() {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
