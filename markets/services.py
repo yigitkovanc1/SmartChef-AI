@@ -70,13 +70,13 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "baş sarımsak": "kuru sarımsak file",
     }
 
-    # BÜTÜN İŞLEMİ TEK DÖNGÜDE YAPIYORUZ
+
     for malz in ai_malzemeler_listesi:
         orijinal_isim = malz.get('isim', '').strip().lower()
         ai_miktar = float(malz.get('miktar', 1))
         ai_birim = malz.get('birim', '').lower().strip()  # gr, ml, adet
 
-        # --- AŞAMA 1: BEDAVA KONTROLÜ ---
+
         if orijinal_isim in yoksayilacaklar:
             hesaplanmis_malzemeler.append({
                 "isim": malz.get('isim', ''),
@@ -85,13 +85,12 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                 "tarif_maliyet": 0.0,
                 "bulundu": True
             })
-            continue  # Suysa bunu listeye ekle ve MİGROSA GİTMEDEN sıradaki malzemeye geç!
+            continue
 
-        # --- AŞAMA 2: SÖZLÜK FİLTRESİ ---
-        # Kelime sözlükte varsa yenisini al, yoksa orijinaliyle devam et
+
         aranan_kelime = kelime_sozlugu.get(orijinal_isim, orijinal_isim)
 
-        # --- AŞAMA 3: MİGROS'TA ARAMA (Filtrelenmiş kelime ile) ---
+
         url = "https://www.migros.com.tr/rest/search/screens/products"
         params = {"q": aranan_kelime}
         headers = {
@@ -124,7 +123,7 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                             market_miktar = float(match.group(1).replace(',', '.'))
                             market_birim = match.group(2).lower()
 
-                            # Market birimlerini standartlaştırma
+
                             if market_birim == 'kg':
                                 market_miktar *= 1000
                                 market_birim = 'gr'
@@ -134,7 +133,7 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                             elif market_birim == 'g':
                                 market_birim = 'gr'
 
-                            # PORSİYON HESAPLA!
+
                             if market_birim == ai_birim and market_miktar > 0:
                                 birim_fiyat = market_fiyat / market_miktar
                                 tarif_maliyeti = birim_fiyat * ai_miktar
@@ -149,12 +148,12 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                             "tarif_maliyet": round(tarif_maliyeti, 2),
                             "bulundu": True
                         })
-                        continue  # Başarılıysa döngüde sonrakine geç
+                        continue
 
         except Exception as e:
             print(f"Migros Bot Hatası ({aranan_kelime}): {e}")
 
-        # Eğer API çökerse veya ürün hiç bulunamazsa
+
         hesaplanmis_malzemeler.append({
             "isim": malz.get('isim', ''),
             "bulundu": False

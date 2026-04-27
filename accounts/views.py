@@ -109,19 +109,18 @@ def sifre_sifirla_view(request):
 
 @login_required(login_url='giris_yap')
 def profil_view(request):
-    # Eğer sistemde eski bir hesapsa ve profili yoksa çökmesin diye otomatik oluşturuyoruz
+
     profil, created = Profile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
-        # Kullanıcı fotoğraf yüklediyse
+
         if 'profile_picture' in request.FILES:
             profil.profile_picture = request.FILES['profile_picture']
             profil.save()
             messages.success(request, "Profil fotoğrafın jilet gibi güncellendi!")
             return redirect('profil_sayfasi')  # urls.py'daki ismin neyse o kalsın
 
-    # 🚀 İŞTE YENİ EKLENEN FAVORİLER KISMI
-    # select_related('recipe') ile veritabanını yormadan tarif detaylarını da hızlıca çekiyoruz
+
     kullanici_favorileri = Favorite.objects.filter(user=request.user).select_related('recipe').order_by('-created_at')
 
     # 📦 PAKETİ HAZIRLIYORUZ: Hem profil bilgilerini hem favorileri HTML'e gönderiyoruz

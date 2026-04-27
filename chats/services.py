@@ -17,7 +17,7 @@ def benzer_tarif_bul(aranan_isim):
 
     aranan_isim = aranan_isim.lower().strip()
 
-    # 1. AŞAMA: Süs kelimelerini çöp kutusuna at
+
     silinecekler = r'\b(bana|bir|tarifi|tarif|tarifleri|yemeği|ev yapımı|kolay|pratik|lezzetli|nefis|klasik|orijinal|özel|usulü|nasıl|yapılır|istiyorum|ver)\b'
     temiz_isim = re.sub(silinecekler, '', aranan_isim).strip()
     temiz_isim = " ".join(temiz_isim.split())
@@ -27,20 +27,20 @@ def benzer_tarif_bul(aranan_isim):
 
     tum_tarifler = Recipe.objects.all()
 
-    # 2. AŞAMA: KESİN EŞLEŞME (Menemen = Menemen)
+
     for t in tum_tarifler:
         db_isim = t.title.lower().replace('*', '').strip()
         if db_isim == temiz_isim:
             return t
 
-    # 3. AŞAMA: BAŞLANGIÇ VE BENZERLİK EŞLEŞMESİ (İskender = İskender Kebap)
+
     for t in tum_tarifler:
         db_isim = t.title.lower().replace('*', '').strip()
 
         if db_isim.startswith(temiz_isim) or temiz_isim.startswith(db_isim):
             return t
 
-        # Difflib ile %80 benzerlik ölçümü
+
         benzerlik_orani = difflib.SequenceMatcher(None, temiz_isim, db_isim).ratio()
         if benzerlik_orani >= 0.80:
             return t
@@ -87,25 +87,23 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
     yeni_tarif_id = None
 
     try:
-        # ==========================================
-        # YENİ: İNATÇI DÖNGÜ (503 Koruması)
-        # ==========================================
-        for deneme in range(5):  # Şansımızı 3'ten 5'e çıkardık!
+
+        for deneme in range(5):
             try:
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=prompt
                 )
-                break  # Başarılı olursa döngüden anında çık
+                break
             except Exception as api_hata:
                 if "503" in str(api_hata) and deneme < 4:
-                    # Bekleme süresini her denemede artır: 3sn -> 6sn -> 9sn -> 12sn
+
                     bekleme_suresi = (deneme + 1) * 3
                     print(
                         f"⏳ Google fena tıkalı. {bekleme_suresi} saniye nefes alıp tekrar saldırıyoruz... (Deneme {deneme + 1}/5)")
                     time.sleep(bekleme_suresi)
                 else:
-                    raise api_hata  # 5 kere denedik hala olmadıysa fırlat
+                    raise api_hata
 
         raw_text = response.text.strip()
         if raw_text.startswith("```json"):

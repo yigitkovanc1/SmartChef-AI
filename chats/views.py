@@ -24,9 +24,7 @@ def chat_api_view(request):
                 request.session['chat_session_id'] = str(uuid.uuid4())
             session_id = request.session['chat_session_id']
 
-            # ==========================================
-            # 1. AKILLI HAFIZA KONTROLÜ (Services.py'daki zekayı kullanıyoruz)
-            # ==========================================
+
             mevcut_tarif = benzer_tarif_bul(kullanici_mesaji)
 
             if mevcut_tarif:
@@ -40,9 +38,7 @@ def chat_api_view(request):
                     "recipe_id": str(mevcut_tarif.id)
                 })
 
-            # ==========================================
-            # 2. YAPAY ZEKAYA SOR (Hata Buradaydı, Geri Getirdik!)
-            # ==========================================
+
             yapay_zeka_verisi = gemini_ile_sohbet_et(request.user, session_id, kullanici_mesaji)
             return JsonResponse(yapay_zeka_verisi)
 
