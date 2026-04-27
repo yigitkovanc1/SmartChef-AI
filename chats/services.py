@@ -1,11 +1,11 @@
 import os
 import json
+import time # YENİ: Bekleme süresi için eklendi
 from google import genai
 from .models import Chat
 from recipes.models import Recipe, Ingredient, RecipeIngredient
 import difflib
 import re
-
 
 def benzer_tarif_bul(aranan_isim):
     """
@@ -28,22 +28,19 @@ def benzer_tarif_bul(aranan_isim):
     tum_tarifler = Recipe.objects.all()
 
     # 2. AŞAMA: KESİN EŞLEŞME (Menemen = Menemen)
-    # Önce birebir aynı ismi taşıyan var mı diye bakarız.
     for t in tum_tarifler:
         db_isim = t.title.lower().replace('*', '').strip()
         if db_isim == temiz_isim:
             return t
 
     # 3. AŞAMA: BAŞLANGIÇ VE BENZERLİK EŞLEŞMESİ (İskender = İskender Kebap)
-    # Eğer kullanıcı "Menemen" yazdıysa, "Kaşarlı Menemen"in BAŞLANGICI "Menemen" olmadığı için onu es geçer!
-    # Ama kullanıcı "İskender" yazdıysa, "İskender Kebap"ın BAŞLANGICI "İskender" olduğu için yakalar!
     for t in tum_tarifler:
         db_isim = t.title.lower().replace('*', '').strip()
 
         if db_isim.startswith(temiz_isim) or temiz_isim.startswith(db_isim):
             return t
 
-        # Difflib ile %80 benzerlik ölçümü (Ufak harf hataları için: örn. Hmbürger)
+        # Difflib ile %80 benzerlik ölçümü
         benzerlik_orani = difflib.SequenceMatcher(None, temiz_isim, db_isim).ratio()
         if benzerlik_orani >= 0.80:
             return t
@@ -55,7 +52,6 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
 
     client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-    # 🚀 PROMPT GÜNCELLENDİ: Kozmetik kalkanı ve net malzeme isimleri zorunluluğu getirildi!
     prompt = f"""
     Senin adın SmartChef. Dünyanın en iyi yapay zeka şefisin.
     Kullanıcı sana yapmak istediği bir yemeğin adını söyleyecek.
@@ -91,10 +87,22 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
     yeni_tarif_id = None
 
     try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt
-        )
+        # ==========================================
+        # YENİ: İNATÇI DÖNGÜ (503 Koruması)
+        # ==========================================
+        for deneme in range(3):
+            try:
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt
+                )
+                break  # Başarılı olursa döngüden anında çık
+            except Exception as api_hata:
+                if "503" in str(api_hata) and deneme < 2:
+                    print(f"⏳ Google meşgul. 2 saniye sonra tekrar deneniyor... (Deneme {deneme + 1})")
+                    time.sleep(2)
+                else:
+                    raise api_hata  # 3 kere denedik hala olmadıysa veya başka hataysa fırlat
 
         raw_text = response.text.strip()
         if raw_text.startswith("```json"):
@@ -105,24 +113,20 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
         try:
             ai_data = json.loads(raw_text, strict=False)
         except json.JSONDecodeError as decode_err:
-            print(
-                f"\n--- JSON ÇEVİRİ HATASI ---\nHATA: {decode_err}\nBOZUK METİN: {raw_text}\n--------------------------\n")
+            print(f"\n--- JSON ÇEVİRİ HATASI ---\nHATA: {decode_err}\nBOZUK METİN: {raw_text}\n--------------------------\n")
             ai_data = {}
 
         tarif_adi = ai_data.get("tarif_adi", "İsimsiz Tarif")
-        kac_kisilik = ai_data.get("kac_kisilik", 1)  # YENİ: Kaç kişilik olduğunu JSON'dan çekiyoruz
+        kac_kisilik = ai_data.get("kac_kisilik", 1)
         sohbet_metni = ai_data.get("sohbet", "İşte harika bir tarif şef!")
         malzemeler_listesi = ai_data.get("malzemeler", [])
 
-        # YENİ: Sohbet metninin en başına porsiyon bilgisini havalı bir şekilde ekliyoruz
         sohbet_metni = f"🍽️ **Bu tarif {kac_kisilik} kişiliktir.**\n\n" + sohbet_metni
 
-        # Veritabanı Kayıt İşlemleri
         if malzemeler_listesi:
             mevcut_tarif = benzer_tarif_bul(tarif_adi)
 
             if not mevcut_tarif:
-                # 🚀 HATA DÜZELTİLDİ: request.user yerine sadece user yazıldı!
                 yeni_tarif = Recipe.objects.create(
                     user=user,
                     title=tarif_adi,
@@ -150,7 +154,7 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
         sohbet_metni = "Üzgünüm şef, tarif defterimi bulamıyorum. Lütfen yemeğin adını tekrar yazar mısın?"
         malzemeler_listesi = []
         import traceback
-        traceback.print_exc()  # Hatayı tam görelim
+        traceback.print_exc()
 
     db_kayit = sohbet_metni
     if malzemeler_listesi:
