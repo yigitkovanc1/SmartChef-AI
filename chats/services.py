@@ -131,7 +131,8 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
                 yeni_tarif = Recipe.objects.create(
                     user=user,
                     title=tarif_adi,
-                    instructions=sohbet_metni
+                    instructions=sohbet_metni,
+                    servings = kac_kisilik
                 )
                 yeni_tarif_id = str(yeni_tarif.id)
 

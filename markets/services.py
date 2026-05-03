@@ -1,5 +1,7 @@
 import requests
 import re
+import math  # YENİ: Yukarı yuvarlama işlemleri için eklendi
+
 
 def migros_maliyet_hesapla(ai_malzemeler_listesi):
     hesaplanmis_malzemeler = []
@@ -7,12 +9,11 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
     toplam_sepet_maliyeti = 0
 
     # 1. BEDAVA OLAN VEYA ARANMAYACAK MALZEMELER
-    yoksayilacaklar = ["su", "sıcak su", "soğuk su", "musluk suyu", "buz", "kaynar su","Ilık Su"]
+    yoksayilacaklar = ["su", "sıcak su", "soğuk su", "musluk suyu", "buz", "kaynar su", "Ilık Su"]
 
     # 2. YANLIŞ ANLAŞILAN KELİMELERİ MİGROS'UN ANLAYACAĞI DİLE ÇEVİRME
     kelime_sozlugu = {
-
-        # 1. TEMEL GIDALAR (Genel kelimeleri markaya zorluyoruz)
+        # 1. TEMEL GIDALAR
         "sıvı yağ": "Migros Ayçiçek Yağı 5 L",
         "ayçiçek yağı": "Migros Ayçiçek Yağı 5 L",
         "un": "sinangil buğday unu",
@@ -31,7 +32,7 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "krema": "tikveşli krema",
         "yoğurt": "Sütaş Kaymaksız Yoğurt 1000 G",
 
-        # 2. PASTACILIK VE KABARTICILAR (Migros bunları ayrı yazınca bulamaz)
+        # 2. PASTACILIK VE KABARTICILAR
         "kabartma tozu": "dr.oetker kabartma tozu",
         "vanilya": "dr.oetker şekerli vanilin",
         "şekerli vanilin": "dr.oetker şekerli vanilin",
@@ -41,7 +42,7 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "Kedidili Bisküvi": "Balocco Savoiardı 200 G",
         "kedi dili": "Balocco Savoiardı 200 G",
 
-        # 3. KASAP VE ŞARKÜTERİ (Dana/Kuzu ayrımı yapmazsa kedi maması gelir 😂)
+        # 3. KASAP VE ŞARKÜTERİ
         "kıyma": "uzman kasap dana kıyma",
         "dana kıyma": "uzman kasap dana kıyma",
         "tavuk göğsü": "banvit piliç göğüs",
@@ -70,12 +71,10 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "baş sarımsak": "kuru sarımsak file",
     }
 
-
     for malz in ai_malzemeler_listesi:
         orijinal_isim = malz.get('isim', '').strip().lower()
         ai_miktar = float(malz.get('miktar', 1))
-        ai_birim = malz.get('birim', '').lower().strip()  # gr, ml, adet
-
+        ai_birim = malz.get('birim', '').lower().strip()
 
         if orijinal_isim in yoksayilacaklar:
             hesaplanmis_malzemeler.append({
@@ -87,9 +86,7 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
             })
             continue
 
-
         aranan_kelime = kelime_sozlugu.get(orijinal_isim, orijinal_isim)
-
 
         url = "https://www.migros.com.tr/rest/search/screens/products"
         params = {"q": aranan_kelime}
@@ -114,7 +111,11 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
 
                     if ham_fiyat != 0:
                         market_fiyat = ham_fiyat / 100
-                        tarif_maliyeti = market_fiyat  # Başlangıçta tamamını sayıyoruz
+
+                        # Başlangıç değerleri (Gramaj bulunamazsa 1 paket sayarız)
+                        tarif_maliyeti = market_fiyat
+                        sepet_maliyeti = market_fiyat
+                        kac_paket_lazim = 1
 
                         # REGEX SİHRİ: Market isminden Gramaj/Litre yakalama (Örn: 570 G, 1 KG, 2.5 L)
                         match = re.search(r'(\d+[\.,]?\d*)\s*(G|KG|ML|L|ADET)', market_isim, re.IGNORECASE)
@@ -122,7 +123,6 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                         if match:
                             market_miktar = float(match.group(1).replace(',', '.'))
                             market_birim = match.group(2).lower()
-
 
                             if market_birim == 'kg':
                                 market_miktar *= 1000
@@ -133,18 +133,29 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                             elif market_birim == 'g':
                                 market_birim = 'gr'
 
-
                             if market_birim == ai_birim and market_miktar > 0:
+                                # 1. Porsiyon Maliyeti Hesabı
                                 birim_fiyat = market_fiyat / market_miktar
                                 tarif_maliyeti = birim_fiyat * ai_miktar
 
-                        toplam_sepet_maliyeti += market_fiyat
+                                # 2. YENİ ZEKAMIZ: Kaç paket alınması gerekiyor?
+                                # math.ceil ile yukarı yuvarlıyoruz (Örn: 2.1 çıkarsa 3 paket almak zorundadır)
+                                kac_paket_lazim = math.ceil(ai_miktar / market_miktar)
+
+                                # Sepet maliyeti paket sayısına göre artıyor
+                                sepet_maliyeti = market_fiyat * kac_paket_lazim
+
+                        # Toplamlara ekleme
+                        toplam_sepet_maliyeti += sepet_maliyeti
                         toplam_tarif_maliyeti += tarif_maliyeti
+
+                        # Ekranda şık durması için paket sayısını isme ekliyoruz
+                        gosterilecek_isim = market_isim if kac_paket_lazim == 1 else f"{market_isim} (x{kac_paket_lazim})"
 
                         hesaplanmis_malzemeler.append({
                             "isim": malz.get('isim', ''),
-                            "market_isim": market_isim,
-                            "sepet_fiyat": round(market_fiyat, 2),
+                            "market_isim": gosterilecek_isim,
+                            "sepet_fiyat": round(sepet_maliyeti, 2),
                             "tarif_maliyet": round(tarif_maliyeti, 2),
                             "bulundu": True
                         })
@@ -152,7 +163,6 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
 
         except Exception as e:
             print(f"Migros Bot Hatası ({aranan_kelime}): {e}")
-
 
         hesaplanmis_malzemeler.append({
             "isim": malz.get('isim', ''),
@@ -165,5 +175,3 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "toplam_sepet": round(toplam_sepet_maliyeti, 2),
         "toplam_tarif_maliyeti": round(toplam_tarif_maliyeti, 2)
     }
-
-
