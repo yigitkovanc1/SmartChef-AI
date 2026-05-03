@@ -5,13 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b3e3fc55-f579-41ef-89a2-0ae5d9c4c29f" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/templates/tarif_defterim.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/accounts/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/chats/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/chats/services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/chats/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/chats/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/markets/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/markets/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/markets/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/markets/services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/markets/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/markets/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/chat.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/chat.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/tarif_detay.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/tarif_detay.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

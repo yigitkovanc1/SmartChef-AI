@@ -36,6 +36,8 @@
                     <a href="/" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🏠 Ana Sayfa</a>
                     <a href="/hesap/profil/" class="btn btn-outline-info btn-sm fw-bold shadow-sm" style="border-radius: 8px;">👤 Profilim</a>
                     <a href="/hesap/dashboard/" class="btn btn-outline-success btn-sm fw-bold shadow-sm" style="border-radius: 8px;">📊 Maliyetler</a>
+                    <a href="{% url 'tarif_defterim' %}" class="btn btn-outline-warning btn-sm fw-bold shadow-sm" style="border-radius: 8px;">📖 Defterim</a>
+
                     <button onclick="history.back()" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🔙 Geri Dön</button>
 
                     <form action="{% url 'cikis_yap' %}" method="post" style="display: inline; margin: 0;">

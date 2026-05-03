@@ -8,4 +8,6 @@ urlpatterns = [
 
     # İleride tarif detay sayfası vs. eklersen buraya alt alta yazacağız
     path('tarif/<uuid:recipe_id>/', views.tarif_detay_view, name='tarif_detay'),
+
+    path('defterim/', views.tarif_defterim_view, name='tarif_defterim'),
 ]

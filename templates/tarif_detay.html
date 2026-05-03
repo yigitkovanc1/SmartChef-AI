@@ -31,6 +31,10 @@
                     </span>
 
                     <a href="/" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🏠 Ana Sayfa</a>
+
+                    <!-- YENİ EKLENEN DEFTERİM BUTONU -->
+                    <a href="{% url 'tarif_defterim' %}" class="btn btn-outline-warning btn-sm fw-bold shadow-sm text-dark" style="border-radius: 8px;">📖 Defterim</a>
+
                     <a href="/hesap/profil/" class="btn btn-outline-info btn-sm fw-bold shadow-sm" style="border-radius: 8px;">👤 Profilim</a>
                     <a href="/hesap/dashboard/" class="btn btn-outline-success btn-sm fw-bold shadow-sm" style="border-radius: 8px;">📊 Maliyetler</a>
                     <button onclick="history.back()" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🔙 Geri Dön</button>
@@ -119,7 +123,7 @@
 
     <script>
         function toggleFavorite(recipeId) {
-            fetch(`/favori-yap/${recipeId}/`, {
+            fetch(`/tarifler/favori-yap/${recipeId}/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}',

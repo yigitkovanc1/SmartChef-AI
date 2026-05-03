@@ -45,3 +45,22 @@ def tarif_detay_view(request, recipe_id):
     }
 
     return render(request, 'tarif_detay.html', context)
+
+
+# recipes/views.py (En alta ekle)
+
+@login_required(login_url='/hesap/giris/')
+def tarif_defterim_view(request):
+    # 1. Kullanıcının yapay zekaya ürettirdiği kendi tarifleri
+    kullanici_tarifleri = Recipe.objects.filter(user=request.user).order_by('-id')
+
+    # 2. Kullanıcının favoriye eklediği tarifler (Favorite modelinden Recipe'a ulaşıyoruz)
+    favori_kayitlari = Favorite.objects.filter(user=request.user).select_related('recipe').order_by('-id')
+    favori_tarifler = [kayit.recipe for kayit in favori_kayitlari]
+
+    context = {
+        'kullanici_tarifleri': kullanici_tarifleri,
+        'favori_tarifler': favori_tarifler,
+    }
+
+    return render(request, 'tarif_defterim.html', context)
