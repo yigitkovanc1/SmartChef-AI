@@ -147,7 +147,7 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
 
 
             # 1. ADIM: YAPAY ZEKANIN HALÜSİNASYONLARINI TEMİZLE
-            # =========================================================
+
             for malz in malzemeler_listesi:
                 if "isim" not in malz:
                     malz["isim"] = malz.get("ad", malz.get("malzeme_adi",
