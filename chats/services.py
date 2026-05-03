@@ -145,7 +145,7 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
 
         if malzemeler_listesi:
 
-            # =========================================================
+
             # 1. ADIM: YAPAY ZEKANIN HALÜSİNASYONLARINI TEMİZLE
             # =========================================================
             for malz in malzemeler_listesi:
