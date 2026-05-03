@@ -25,20 +25,20 @@
         .typing-indicator { display: none; align-self: flex-start; background-color: white; padding: 1rem 1.5rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); color: #888; font-style: italic;}
 
         /* Maliyet Kartı & Checkbox Özel Tasarımı */
-        .maliyet-card { border-left: 5px solid #198754 !important; max-width: 450px; }
+        .maliyet-card { max-width: 450px; }
         .ingredient-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 8px 0;
             border-bottom: 1px solid #f0f0f0;
-            gap: 15px; /* Malzeme ismi ile buton arasına çelik bariyer! */
+            gap: 15px;
         }
         .ingredient-text {
             font-weight: 500;
             font-size: 0.95rem;
-            flex: 1; /* Alanı esnek kullan ama butonu sıkıştırma */
-            word-break: break-word; /* Çok uzun kelimeler alt satıra insin */
+            flex: 1;
+            word-break: break-word;
         }
         .evde-var-check { cursor: pointer; transform: scale(1.2); accent-color: #28a745; margin-right: 8px;}
         .evde-var-label {
@@ -49,8 +49,8 @@
             margin: 0;
             display: flex;
             align-items: center;
-            white-space: nowrap; /* Butonun yazısı ASLA alt alta kaymasın */
-            flex-shrink: 0; /* Ekran daralsa da butonu asla küçültme! */
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .ingredient-item.strikethrough .ingredient-text { text-decoration: line-through; color: #adb5bd; }
@@ -90,7 +90,7 @@
 
 <div class="chat-container" id="chatBox">
     <div class="message msg-ai">
-        <b>👨‍🍳 SmartChef:</b> Merhaba Şef! Mutfağa hoş geldin. Bugün ne pişiriyoruz? İstersen sana dolabındaki malzemelerle harika bir tarif önerebilirim!
+        <b>👨‍🍳 SmartChef:</b> Merhaba Şef! Mutfağa hoş geldin. İstersen doğrudan bir yemek ismi yaz, istersen <b>"Elimde şunlar var: tavuk, makarna, krema..."</b> diyerek dolabındakileri söyle, sana harika bir tarif uydurayım!
     </div>
     <div class="typing-indicator" id="loadingBtn">🧠 Şef düşünüyor...</div>
 </div>
@@ -99,7 +99,7 @@
     <div class="container-fluid px-4">
         <form id="chatForm" class="d-flex gap-3">
             {% csrf_token %}
-            <input type="text" id="userInput" class="form-control chat-input" placeholder="Yapay zeka şefine bir şeyler sor..." autocomplete="off" required>
+            <input type="text" id="userInput" class="form-control chat-input" placeholder="Örn: Elimde kıyma ve patates var, ne yapsam? veya İskender tarifi ver..." autocomplete="off" required>
             <button type="submit" class="btn-send">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-send-fill" viewBox="0 0 16 16"><path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/></svg>
             </button>
@@ -113,7 +113,6 @@
     const chatBox = document.getElementById('chatBox');
     const loadingBtn = document.getElementById('loadingBtn');
 
-    // Checkbox işaretlendiğinde yazının üstünü çizme efekti
     function toggleStrikethrough(checkbox) {
         const itemDiv = checkbox.closest('.ingredient-item');
         if (checkbox.checked) {
@@ -121,6 +120,35 @@
         } else {
             itemDiv.classList.remove('strikethrough');
         }
+    }
+
+    function chatKisiSayisiDegistir(recipeId, degisim) {
+        const container = document.getElementById(`malzeme-container-${recipeId}`);
+        if (!container) return;
+
+        let orijinalKisi = parseInt(container.getAttribute('data-orijinal-kisi'), 10);
+        let guncelKisi = parseInt(container.getAttribute('data-guncel-kisi'), 10);
+
+        let yeniKisi = guncelKisi + degisim;
+        if (yeniKisi < 1) return;
+
+        container.setAttribute('data-guncel-kisi', yeniKisi);
+        document.getElementById(`chat-kisi-${recipeId}`).innerText = yeniKisi + ' Kişilik';
+
+        let carpan = yeniKisi / orijinalKisi;
+
+        const satirlar = container.querySelectorAll('.chat-malzeme-satiri');
+        satirlar.forEach(satir => {
+            const badge = satir.querySelector('.chat-miktar-badge');
+            let orijinalMiktarText = badge.getAttribute('data-orijinal-miktar').replace(',', '.');
+            let orijinalMiktar = parseFloat(orijinalMiktarText);
+
+            if (!isNaN(orijinalMiktar)) {
+                let yeniMiktar = orijinalMiktar * carpan;
+                let formatliMiktar = Number.isInteger(yeniMiktar) ? yeniMiktar : yeniMiktar.toFixed(1);
+                badge.querySelector('.gosterilen-miktar').innerText = formatliMiktar;
+            }
+        });
     }
 
     chatForm.addEventListener('submit', async function(e) {
@@ -148,33 +176,58 @@
             const data = await response.json();
             loadingBtn.style.display = 'none';
 
+            let orijinalKisi = 1;
             if (data.sohbet) {
+                const regex = /Bu tarif\s+(\d+)\s+kişiliktir/i;
+                const eslesme = data.sohbet.match(regex);
+                if (eslesme && eslesme[1]) {
+                    orijinalKisi = parseInt(eslesme[1], 10);
+                }
                 chatBox.insertBefore(createMessageElement(data.sohbet, 'msg-ai', '👨‍🍳 SmartChef:'), loadingBtn);
             }
 
-            // YENİ: Malzemeleri "Evde Var" Checkbox'larıyla Ekrana Basma
-            // YENİ: Malzemeleri "Evde Var" Checkbox'larıyla Ekrana Basma
             if (data.malzemeler && data.malzemeler.length > 0) {
-                let malzemeHTML = `<div class="mt-2" id="malzeme-listesi-${data.recipe_id}">`;
+                let malzemeHTML = `
+                    <div class="mt-2 p-3 bg-white border shadow-sm" style="border-radius: 15px;" id="malzeme-container-${data.recipe_id}" data-orijinal-kisi="${orijinalKisi}" data-guncel-kisi="${orijinalKisi}">
 
-                data.malzemeler.forEach(function(item, index) {
-                    // API'den gelen string veriyi parçalıyoruz
-                    const parcalar = item.split(" ");
-                    const miktar = parcalar[0];
-                    const birim = parcalar[1];
-                    const isim = parcalar.slice(2).join(" ");
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                            <span class="fw-bold" style="color:#ff6b6b;">📋 Eksikleri Belirle</span>
+                            <div class="d-flex align-items-center bg-light px-2 py-1" style="border-radius: 8px; border: 1px solid #e0e0e0;">
+                                <button type="button" onclick="chatKisiSayisiDegistir('${data.recipe_id}', -1)" class="btn btn-sm btn-light text-danger fw-bold py-0 px-2">-</button>
+                                <span id="chat-kisi-${data.recipe_id}" class="fw-bold mx-2 text-dark" style="font-size: 0.85rem;">${orijinalKisi} Kişilik</span>
+                                <button type="button" onclick="chatKisiSayisiDegistir('${data.recipe_id}', 1)" class="btn btn-sm btn-light text-success fw-bold py-0 px-2">+</button>
+                            </div>
+                        </div>
+
+                        <div id="malzeme-listesi-${data.recipe_id}">`;
+
+                data.malzemeler.forEach(function(item) {
+                    // YENİ: JSON objesini parçalıyoruz (Artık split ile string bölmeye gerek yok)
+                    const isim = item.isim || "Bilinmeyen Malzeme";
+                    const miktar = parseFloat(item.miktar) || 0;
+                    const birim = item.birim || "";
+                    const evdeVar = item.evde_var === true; // Zeka burada!
+
+                    // Evde varsa otomatik işaretle ve üstünü çiz
+                    const checkedAttr = evdeVar ? "checked" : "";
+                    const strikethroughClass = evdeVar ? "strikethrough" : "";
 
                     malzemeHTML += `
-                        <div class="ingredient-item">
-                            <span class="ingredient-text">🛒 ${item}</span>
+                        <div class="ingredient-item chat-malzeme-satiri ${strikethroughClass}">
+                            <span class="ingredient-text">
+                                🛒 <span class="chat-miktar-badge text-danger fw-bold" data-orijinal-miktar="${miktar}">
+                                    <span class="gosterilen-miktar">${miktar}</span> ${birim}
+                                   </span>
+                                <span class="text-dark">${isim}</span>
+                            </span>
                             <label class="evde-var-label">
-                                <input type="checkbox" class="evde-var-check" onchange="toggleStrikethrough(this)" data-isim="${isim}" data-miktar="${miktar}" data-birim="${birim}">
+                                <input type="checkbox" class="evde-var-check" onchange="toggleStrikethrough(this)" data-isim="${isim}" data-birim="${birim}" ${checkedAttr}>
                                 🏠 Evde Var
                             </label>
                         </div>`;
                 });
-                malzemeHTML += "</div>";
-                chatBox.insertBefore(createMessageElement("<b style='color:#ff6b6b;'>📋 Gerekli Malzemeler (Eksikleri Belirle):</b>" + malzemeHTML, 'msg-ai', ''), loadingBtn);
+                malzemeHTML += "</div></div>";
+                chatBox.insertBefore(createMessageElement(malzemeHTML, 'msg-ai', ''), loadingBtn);
             }
 
             if (data.recipe_id) {
@@ -195,26 +248,30 @@
         }
     });
 
-    // YENİ: SADECE EKSİKLERİ TOPLAYIP GÖNDEREN MALİYET HESAPLAMA
     async function maliyetHesapla(recipeId, btnElement) {
-        // 1. Sadece "Evde Var" kutucuğu İŞARETLENMEMİŞ olanları bul (Yani eksikleri bul)
-        const eksikMalzemeler = [];
+        const container = document.getElementById(`malzeme-container-${recipeId}`);
         const listeDiv = document.getElementById(`malzeme-listesi-${recipeId}`);
+        let guncelKisi = container ? parseInt(container.getAttribute('data-guncel-kisi'), 10) : 1;
+
+        const eksikMalzemeler = [];
 
         if (listeDiv) {
-            const checkboxlar = listeDiv.querySelectorAll('.evde-var-check');
-            checkboxlar.forEach(cb => {
-                if (!cb.checked) { // Eğer evde yoksa listeye ekle
+            const satirlar = listeDiv.querySelectorAll('.chat-malzeme-satiri');
+            satirlar.forEach(satir => {
+                const cb = satir.querySelector('.evde-var-check');
+                if (!cb.checked) {
+                    const miktarSpan = satir.querySelector('.gosterilen-miktar');
+                    let guncelMiktar = parseFloat(miktarSpan.innerText);
+
                     eksikMalzemeler.push({
                         isim: cb.getAttribute('data-isim'),
-                        miktar: parseFloat(cb.getAttribute('data-miktar')) || 1,
+                        miktar: guncelMiktar,
                         birim: cb.getAttribute('data-birim')
                     });
                 }
             });
         }
 
-        // Eğer her şey evde varsa boşuna markete gitme!
         if (eksikMalzemeler.length === 0) {
             alert("Harika Şef! Gerekli tüm malzemeler evde var. Senin için maliyet 0 TL! 🎉");
             return;
@@ -230,39 +287,62 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 },
-                body: JSON.stringify({
-                    // Javascript artık boş obje değil, eksikler listesini Python'a yolluyor!
-                    malzemeler: eksikMalzemeler
-                })
+                body: JSON.stringify({ malzemeler: eksikMalzemeler })
             });
 
             const data = await res.json();
 
             if (data.durum === "basarili") {
+                let tekKisilikMaliyet = (parseFloat(data.toplam_tarif_maliyeti) / guncelKisi).toFixed(2);
+
                 let maliyetHTML = `
-                    <div class="card mt-2 shadow-sm maliyet-card">
-                        <div class="card-body p-3">
-                            <h6 class="card-title text-success fw-bold">💰 Eksiklerin Migros Maliyeti</h6>
-                            <table class="table table-sm table-borderless mb-0" style="font-size: 0.85rem;">
-                                <tbody>`;
+                    <div class="card border-0 shadow-sm mt-3 maliyet-card" style="border-radius: 15px; border: 1px solid #e0e0e0 !important;">
+                        <div class="card-header bg-success text-white fw-bold py-2" style="border-radius: 15px 15px 0 0;">
+                            🧾 Tahmini Migros Maliyeti
+                        </div>
+                        <ul class="list-group list-group-flush">`;
 
                 data.malzemeler.forEach(m => {
                     if (m.bulundu) {
-                        maliyetHTML += `<tr><td>✅ ${m.market_isim || m.isim}</td><td class="text-end text-nowrap"><b>${m.sepet_fiyat} TL</b></td></tr>`;
+                        maliyetHTML += `<li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3 text-dark">
+                                            <span>✅ <span style="font-size: 0.85rem;">${m.market_isim || m.isim}</span></span>
+                                            <span class="fw-bold text-nowrap ms-2" style="font-size: 0.9rem;">${m.sepet_fiyat} TL</span>
+                                        </li>`;
                     } else {
-                        maliyetHTML += `<tr><td class="text-muted">❌ ${m.isim}</td><td class="text-end text-muted small">Bulunamadı</td></tr>`;
+                        maliyetHTML += `<li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3 text-danger text-decoration-line-through">
+                                            <span>❌ <span style="font-size: 0.85rem;">${m.isim}</span></span>
+                                            <span class="text-muted small ms-2">Bulunamadı</span>
+                                        </li>`;
                     }
                 });
 
                 maliyetHTML += `
-                                </tbody>
-                            </table>
-                            <hr class="my-2">
-                            <div class="d-flex justify-content-between fw-bold text-dark">
-                                <span>Alınacakların Toplam Maliyeti:</span>
-                                <span class="text-danger" style="font-size: 1.1rem;">${data.toplam_tarif_maliyeti} TL</span>
+                        </ul>
+                        <div class="card-footer bg-light border-top-0 p-2" style="border-radius: 0 0 15px 15px;">
+
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white shadow-sm" style="border-radius: 8px; border-left: 4px solid #6c757d;">
+                                <div>
+                                    <span class="d-block fw-bold text-secondary" style="font-size: 0.85rem;">🛒 Market Sepeti</span>
+                                    <small class="text-muted" style="font-size: 0.7rem;">Kasada ödenecek tutar</small>
+                                </div>
+                                <span class="fs-6 fw-bold text-dark">${data.toplam_sepet} TL</span>
                             </div>
-                            <div class="text-muted mt-1" style="font-size: 0.75rem;">🛒 Kasa Toplamı (Market Sepeti): ${data.toplam_sepet} TL</div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white shadow-sm" style="border-radius: 8px; border-left: 4px solid #ffc107;">
+                                <div>
+                                    <span class="d-block fw-bold text-warning" style="font-size: 0.85rem; text-shadow: 0 0 1px rgba(0,0,0,0.1);">👨‍🍳 Tüm Tarif (${guncelKisi} Kişilik)</span>
+                                    <small class="text-muted" style="font-size: 0.7rem;">Yemeğe giren kısım</small>
+                                </div>
+                                <span class="fs-6 fw-bold text-dark">${data.toplam_tarif_maliyeti} TL</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center p-2 bg-danger bg-opacity-10 shadow-sm" style="border-radius: 8px; border-left: 4px solid #dc3545;">
+                                <div>
+                                    <span class="d-block fw-bold text-danger" style="font-size: 0.85rem;">👤 1 Kişilik Maliyet</span>
+                                </div>
+                                <span class="fs-5 fw-bold text-danger">${tekKisilikMaliyet} TL</span>
+                            </div>
+
                         </div>
                     </div>`;
 

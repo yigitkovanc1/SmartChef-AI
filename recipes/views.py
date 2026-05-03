@@ -18,8 +18,10 @@ def favori_toggle_view(request, recipe_id):
         Favorite.objects.create(user=request.user, recipe=recipe)  # Yoksa ekle
         is_favorite = True
 
-    # Sayfayı yenilemeden (AJAX ile) cevap dönmek için JSON kullanıyoruz
-    return JsonResponse({'status': 'ok', 'is_favorite': is_favorite})
+    # DÜZELTME: JavaScript kodu animasyonu başlatmak için 'success' kelimesini bekliyor.
+    # O yüzden 'ok' yerine 'success' döndürüyoruz!
+    return JsonResponse({'status': 'success', 'is_favorite': is_favorite})
+
 # YENİ: Anasayfa Vitrini
 def anasayfa_view(request):
     # Veritabanından rastgele (?) 3 tarif çekiyoruz
@@ -46,8 +48,6 @@ def tarif_detay_view(request, recipe_id):
 
     return render(request, 'tarif_detay.html', context)
 
-
-# recipes/views.py (En alta ekle)
 
 @login_required(login_url='/hesap/giris/')
 def tarif_defterim_view(request):
