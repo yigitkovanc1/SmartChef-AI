@@ -24,15 +24,13 @@ def chat_api_view(request):
                 request.session['chat_session_id'] = str(uuid.uuid4())
             session_id = request.session['chat_session_id']
 
-            # ========================================================
-            # 1. AŞAMA: HAFIZA KONTROLÜ (VERİTABANI)
-            # ========================================================
+
             mevcut_tarif = benzer_tarif_bul(kullanici_mesaji)
 
             if mevcut_tarif:
                 malzemeler_query = RecipeIngredient.objects.filter(recipe=mevcut_tarif)
 
-                # DÜZELTME BURADA: Düz yazı yerine jilet gibi JSON objesi oluşturuyoruz!
+
                 malzemeler_listesi = []
                 for m in malzemeler_query:
                     malzemeler_listesi.append({
@@ -48,9 +46,7 @@ def chat_api_view(request):
                     "recipe_id": str(mevcut_tarif.id)
                 })
 
-            # ========================================================
-            # 2. AŞAMA: HAFIZADA YOKSA YAPAY ZEKAYA GİT
-            # ========================================================
+
             yapay_zeka_verisi = gemini_ile_sohbet_et(request.user, session_id, kullanici_mesaji)
             return JsonResponse(yapay_zeka_verisi)
 

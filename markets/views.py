@@ -14,7 +14,7 @@ def maliyet_hesapla_api(request, recipe_id):
             recipe = Recipe.objects.get(id=recipe_id)
             data = json.loads(request.body)
 
-            # Javascript'ten gelen listeyi alıyoruz
+
             ai_listesi = data.get('malzemeler')
 
 

@@ -43,9 +43,7 @@ def benzer_tarif_bul(aranan_isim):
 def gemini_ile_sohbet_et(user, session_id, user_message):
     Chat.objects.create(user=user, session_id=session_id, message=user_message, sender='user')
 
-    # ==========================================
-    # TASARRUF MODU: API'YE GİTMEDEN ÖNCE VERİTABANINA BAK
-    # ==========================================
+
     mevcut_tarif = benzer_tarif_bul(user_message)
 
     if mevcut_tarif:
@@ -88,14 +86,15 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
         2. FORMAT KURALI: Cevabını KESİNLİKLE VE SADECE aşağıdaki JSON formatında vermelisin. Başka hiçbir metin ekleme.
         3. MARKET KURALI: Egzotik malzeme KULLANMA. 'Sıvı Yağ' yerine 'Ayçiçek Yağı' yaz. 'Kıyma' yerine 'Dana Kıyma' yaz.
         4. İSİMLENDİRME VE BİRİM KURALI (KULLANICI DENEYİMİ İÇİN ÇOK ÖNEMLİ!): 
-           - İnsanların mutfakta kullandığı doğal ölçüleri KULLAN: "su bardağı", "yemek kaşığı", "çay kaşığı", "diş" (sarımsak için), "adet" veya "dilim".
-           - AMA ASLA belirsiz sıfatlar KULLANMA! "Orta boy", "büyük boy", "bir tutam", "göz kararı", "yeteri kadar", "yarım" kelimeleri YASAKTIR! (Örn: "Orta boy soğan" yerine SADECE "Soğan", "Yarım Limon" yerine "0.5 adet Limon" yaz).
-        5. "EVDE VAR" ZEKASI (ÇOK ÖNEMLİ!): Kullanıcının mesajında sana verdiği (yani evinde olan) malzemeler için "evde_var" değerini true yap. Senin yemeği tamamlamak için mecburen eklediğin ekstra malzemeler için false yap! (Kullanıcı hiç malzeme vermeden direkt "Makarna yap" derse hepsini false yap).
+           - İnsanların mutfakta kullandığı doğal ölçüleri KULLAN: "su bardağı", "yemek kaşığı", "çay kaşığı", "diş", "adet", "dilim" veya "gr".
+           - AMA ASLA belirsiz sıfatlar KULLANMA! "Orta boy", "büyük boy", "bir tutam", "göz kararı", "yarım" kelimeleri YASAKTIR! (Örn: "Orta boy soğan" yerine SADECE "Soğan" yaz).
+        5. TEK KALEM KURALI (ÇOK ÖNEMLİ!): Malzemeleri ASLA "Sos için", "Köfte için" diye gruplara ayırma. Aynı malzemeyi listede iki kere YAZMA. Eğer tuz hem sosta hem köftede kullanılacaksa, toplam miktarını hesapla ve JSON listesine SADECE BİR KERE "Tuz" olarak yaz.
+        6. "EVDE VAR" ZEKASI: Kullanıcının mesajında sana verdiği malzemeler için "evde_var" değerini true yap. Senin ekstra eklediklerin için false yap! (Hiç malzeme vermezse hepsini false yap).
 
         {{
             "tarif_adi": "Fırında Kaşarlı Tavuk",
             "kac_kisilik": 2,
-            "sohbet": "İşte elindeki malzemelerle harika bir tarif! 1. Adım... 2. Adım... (YAPILIŞ AŞAMALARINI KESİNLİKLE EKSİKSİZ, UZUN UZUN VE DETAYLI YAZ)",
+            "sohbet": "İşte harika bir tarif! 1. Adım... 2. Adım... (YAPILIŞ AŞAMALARINI DETAYLI YAZ)",
             "malzemeler": [
                 {{"isim": "Banvit Piliç Göğüs", "miktar": 400, "birim": "gr", "evde_var": true}},
                 {{"isim": "Soğan", "miktar": 1, "birim": "adet", "evde_var": true}},
@@ -179,19 +178,19 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
             sihirli_dolap_kullanildi_mi = any(m.get("evde_var") is True for m in malzemeler_listesi)
 
             if sihirli_dolap_kullanildi_mi:
-                # Kullanıcı malzeme verdiyse bu %100 YENİ bir tariftir.
+
                 isim = user.first_name if user.first_name else user.username
                 isim = isim.capitalize()
                 tarih_str = datetime.now().strftime("%d.%m.%y")
                 kaydedilecek_isim = f"{tarih_str} Tarihli {isim}'in {orijinal_tarif_adi}"
 
-                # İŞTE BÜYÜ BURADA: Eski tarifi aramayı tamamen İPTAL ediyoruz!
+
                 mevcut_tarif = None
             else:
                 kaydedilecek_isim = orijinal_tarif_adi
                 mevcut_tarif = benzer_tarif_bul(orijinal_tarif_adi)
 
-            # EĞER YENİ BİR TARİFSE VERİTABANINA DİZ!
+
             if not mevcut_tarif:
                 yeni_tarif = Recipe.objects.create(
                     user=user,
@@ -206,7 +205,7 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
                     miktar = float(malz.get("miktar", 0.0))
                     birim = str(malz.get("birim", "")).strip()
 
-                    # Malzeme boş veya bilinmeyen değilse kaydet
+
                     if malz_isim and malz_isim != "bilinmeyen malzeme":
                         ingredient_obj, created = Ingredient.objects.get_or_create(name=malz_isim)
                         RecipeIngredient.objects.create(

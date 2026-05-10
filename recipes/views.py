@@ -22,22 +22,22 @@ def favori_toggle_view(request, recipe_id):
     # O yüzden 'ok' yerine 'success' döndürüyoruz!
     return JsonResponse({'status': 'success', 'is_favorite': is_favorite})
 
-# YENİ: Anasayfa Vitrini
+
 def anasayfa_view(request):
-    # Veritabanından rastgele (?) 3 tarif çekiyoruz
+
     onerilen_tarifler = Recipe.objects.exclude(title__icontains='Tarihli').order_by('?')[:3]
     return render(request, 'home.html', {'onerilen_tarifler': onerilen_tarifler})
 
 
 @login_required(login_url='/hesap/giris/')
 def tarif_detay_view(request, recipe_id):
-    # Tarifi veritabanından bul, yoksa 404 hatası ver
+
     tarif = get_object_or_404(Recipe, id=recipe_id)
 
-    # Tarife ait malzemeleri çek
+
     malzemeler = RecipeIngredient.objects.filter(recipe=tarif)
 
-    # Bu tarif kullanıcının favorilerinde var mı kontrol et
+
     is_favorite = Favorite.objects.filter(user=request.user, recipe=tarif).exists()
 
     context = {
@@ -54,7 +54,7 @@ def tarif_defterim_view(request):
     # 1. Kullanıcının yapay zekaya ürettirdiği kendi tarifleri
     kullanici_tarifleri = Recipe.objects.filter(user=request.user).order_by('-id')
 
-    # 2. Kullanıcının favoriye eklediği tarifler (Favorite modelinden Recipe'a ulaşıyoruz)
+
     favori_kayitlari = Favorite.objects.filter(user=request.user).select_related('recipe').order_by('-id')
     favori_tarifler = [kayit.recipe for kayit in favori_kayitlari]
 
