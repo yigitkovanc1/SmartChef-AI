@@ -62,15 +62,65 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
     }
 
     birim_ceviri_sozlugu = {
+        # ==========================================
+        # 1. KAŞIK ÖLÇÜLERİ
+        # ==========================================
         "çay kaşığı": {"carpan": 5, "yeni_birim": "gr"},
         "tatlı kaşığı": {"carpan": 10, "yeni_birim": "gr"},
         "yemek kaşığı": {"carpan": 15, "yeni_birim": "gr"},
+        "çorba kaşığı": {"carpan": 15, "yeni_birim": "gr"},
+        "kahve kaşığı": {"carpan": 3, "yeni_birim": "gr"},
+
+        # ==========================================
+        # 2. BARDAK VE FİNCAN ÖLÇÜLERİ
+        # ==========================================
         "su bardağı": {"carpan": 200, "yeni_birim": "gr"},
         "çay bardağı": {"carpan": 100, "yeni_birim": "gr"},
+        "kahve fincanı": {"carpan": 75, "yeni_birim": "gr"},
         "fincan": {"carpan": 50, "yeni_birim": "gr"},
+        "kupa": {"carpan": 250, "yeni_birim": "gr"},
+        "kase": {"carpan": 300, "yeni_birim": "gr"},
+
+        # ==========================================
+        # 3. KATI VE YARDIMCI MALZEME ÖLÇÜLERİ
+        # ==========================================
+        "diş": {"carpan": 5, "yeni_birim": "gr"},  # Sarımsak için
+        "baş": {"carpan": 50, "yeni_birim": "gr"},  # Sarımsak veya soğan için
+        "dilim": {"carpan": 30, "yeni_birim": "gr"},  # Ekmek, peynir, limon vb.
+        "parça": {"carpan": 50, "yeni_birim": "gr"},  # Et veya çikolata vb.
+        "yaprak": {"carpan": 2, "yeni_birim": "gr"},  # Nane, defne yaprağı
+        "dal": {"carpan": 5, "yeni_birim": "gr"},  # Maydanoz, dereotu, biberiye
+        "kök": {"carpan": 20, "yeni_birim": "gr"},  # Ispanak, semizotu
+
+        # ==========================================
+        # 4. GÖZ KARARI VE JARGON ÖLÇÜLERİ
+        # ==========================================
         "tutam": {"carpan": 2, "yeni_birim": "gr"},
-        "dilim": {"carpan": 30, "yeni_birim": "gr"},
-        "diş": {"carpan": 5, "yeni_birim": "gr"}
+        "avuç": {"carpan": 30, "yeni_birim": "gr"},
+        "kepçe": {"carpan": 100, "yeni_birim": "ml"},
+        "damla": {"carpan": 1, "yeni_birim": "ml"},  # Limon, sirke vb.
+        "fiske": {"carpan": 1, "yeni_birim": "gr"},  # Tuz, karabiber vb.
+
+        # ==========================================
+        # 5. BÜYÜK AĞIRLIK VE HACİM BİRİMLERİ (Yanlış yazımlara karşı)
+        # ==========================================
+        "kilogram": {"carpan": 1000, "yeni_birim": "gr"},
+        "kilo": {"carpan": 1000, "yeni_birim": "gr"},
+        "kg": {"carpan": 1000, "yeni_birim": "gr"},
+        "litre": {"carpan": 1000, "yeni_birim": "ml"},
+        "lt": {"carpan": 1000, "yeni_birim": "ml"},
+        "yarım kilo": {"carpan": 500, "yeni_birim": "gr"},
+        "yarım litre": {"carpan": 500, "yeni_birim": "ml"},
+        "çeyrek kilo": {"carpan": 250, "yeni_birim": "gr"},
+
+        # ==========================================
+        # 6. PAKET VE AMBALAJ ÖLÇÜLERİ
+        # ==========================================
+        "paket": {"carpan": 1, "yeni_birim": "adet"},
+        "kutu": {"carpan": 1, "yeni_birim": "adet"},
+        "kavanoz": {"carpan": 1, "yeni_birim": "adet"},
+        "şişe": {"carpan": 1, "yeni_birim": "adet"},
+        "poşet": {"carpan": 1, "yeni_birim": "adet"}
     }
 
     for malz in ai_malzemeler_listesi:
