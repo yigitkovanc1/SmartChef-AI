@@ -25,7 +25,7 @@ def favori_toggle_view(request, recipe_id):
 # YENİ: Anasayfa Vitrini
 def anasayfa_view(request):
     # Veritabanından rastgele (?) 3 tarif çekiyoruz
-    onerilen_tarifler = Recipe.objects.all().order_by('?')[:3]
+    onerilen_tarifler = Recipe.objects.exclude(title__icontains='Tarihli').order_by('?')[:3]
     return render(request, 'home.html', {'onerilen_tarifler': onerilen_tarifler})
 
 
