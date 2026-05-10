@@ -2,7 +2,6 @@ import requests
 import re
 import math  # Yukarı yuvarlama işlemleri için
 
-
 def migros_maliyet_hesapla(ai_malzemeler_listesi):
     hesaplanmis_malzemeler = []
     toplam_tarif_maliyeti = 0
@@ -84,13 +83,13 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         # ==========================================
         # 3. KATI VE YARDIMCI MALZEME ÖLÇÜLERİ
         # ==========================================
-        "diş": {"carpan": 5, "yeni_birim": "gr"},  # Sarımsak için
-        "baş": {"carpan": 50, "yeni_birim": "gr"},  # Sarımsak veya soğan için
-        "dilim": {"carpan": 30, "yeni_birim": "gr"},  # Ekmek, peynir, limon vb.
-        "parça": {"carpan": 50, "yeni_birim": "gr"},  # Et veya çikolata vb.
-        "yaprak": {"carpan": 2, "yeni_birim": "gr"},  # Nane, defne yaprağı
-        "dal": {"carpan": 5, "yeni_birim": "gr"},  # Maydanoz, dereotu, biberiye
-        "kök": {"carpan": 20, "yeni_birim": "gr"},  # Ispanak, semizotu
+        "diş": {"carpan": 5, "yeni_birim": "gr"},
+        "baş": {"carpan": 50, "yeni_birim": "gr"},
+        "dilim": {"carpan": 30, "yeni_birim": "gr"},
+        "parça": {"carpan": 50, "yeni_birim": "gr"},
+        "yaprak": {"carpan": 2, "yeni_birim": "gr"},
+        "dal": {"carpan": 5, "yeni_birim": "gr"},
+        "kök": {"carpan": 20, "yeni_birim": "gr"},
 
         # ==========================================
         # 4. GÖZ KARARI VE JARGON ÖLÇÜLERİ
@@ -98,11 +97,11 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "tutam": {"carpan": 2, "yeni_birim": "gr"},
         "avuç": {"carpan": 30, "yeni_birim": "gr"},
         "kepçe": {"carpan": 100, "yeni_birim": "ml"},
-        "damla": {"carpan": 1, "yeni_birim": "ml"},  # Limon, sirke vb.
-        "fiske": {"carpan": 1, "yeni_birim": "gr"},  # Tuz, karabiber vb.
+        "damla": {"carpan": 1, "yeni_birim": "ml"},
+        "fiske": {"carpan": 1, "yeni_birim": "gr"},
 
         # ==========================================
-        # 5. BÜYÜK AĞIRLIK VE HACİM BİRİMLERİ (Yanlış yazımlara karşı)
+        # 5. BÜYÜK AĞIRLIK VE HACİM BİRİMLERİ
         # ==========================================
         "kilogram": {"carpan": 1000, "yeni_birim": "gr"},
         "kilo": {"carpan": 1000, "yeni_birim": "gr"},
@@ -121,6 +120,15 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "kavanoz": {"carpan": 1, "yeni_birim": "adet"},
         "şişe": {"carpan": 1, "yeni_birim": "adet"},
         "poşet": {"carpan": 1, "yeni_birim": "adet"}
+    }
+
+    adet_gramaj_sozlugu = {
+        "soğan": 150, "domates": 150, "patates": 200, "patlıcan": 200, "kabak": 200,
+        "havuç": 100, "limon": 100, "salatalık": 120, "biber": 30, "yeşil biber": 30,
+        "kırmızı biber": 50, "çarliston": 30, "lavaş": 50, "pide": 200, "sarımsak": 5,
+        "mantar": 20, "çilek": 15, "muz": 120, "elma": 150,
+        # YENİ EKLENENLER:
+        "maydanoz": 50, "dereotu": 50, "nane": 50, "roka": 50, "marul": 300, "kıvırcık": 300
     }
 
     for malz in ai_malzemeler_listesi:
@@ -173,7 +181,6 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                     if ham_fiyat != 0:
                         market_fiyat = ham_fiyat / 100
 
-                        # Başlangıç değerleri (Gramaj bulunamazsa 1 paket sayarız)
                         tarif_maliyeti = market_fiyat
                         sepet_maliyeti = market_fiyat
                         kac_paket_lazim = 1
@@ -182,21 +189,22 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                         market_birim = None
 
                         # ========================================================
-                        # 2. ZIRH: MARKET İSMİNDEN GRAMAJ AYIKLAMA (YENİLENDİ!)
+                        # 2. ZIRH: MARKET İSMİNDEN GRAMAJ AYIKLAMA (DAHA ZEKİ)
                         # ========================================================
-                        # Önce normal rakamlı olanları ara (Örn: 5 L, 500 G, 15 Adet)
-                        match = re.search(r'(\d+[\.,]?\d*)\s*(G|KG|ML|L|ADET)\b', market_isim, re.IGNORECASE)
+                        match = re.search(r'(\d+[\.,]?\d*)\s*(G|KG|ML|L|ADET|BAĞ|DEMET)\b', market_isim, re.IGNORECASE)
                         if match:
                             market_miktar = float(match.group(1).replace(',', '.'))
                             market_birim = match.group(2).lower()
                         else:
-                            # EĞER RAKAM YOKSA: Sadece "Kg" veya "L" yazıyorsa 1 Kilo/1 Litre say!
-                            match_tek = re.search(r'\b(KG|L)\b', market_isim, re.IGNORECASE)
+                            match_tek = re.search(r'\b(KG|L|ADET|BAĞ|DEMET)\b', market_isim, re.IGNORECASE)
                             if match_tek:
                                 market_miktar = 1.0
                                 market_birim = match_tek.group(1).lower()
+                            else:
+                                # HİÇBİR BİRİM YAZMIYORSA (Örn: Sadece "Maydanoz") = 1 Adet say!
+                                market_miktar = 1.0
+                                market_birim = "adet"
 
-                        # Eğer başarıyla gramaj bulabildiysek matematiği yapalım
                         if market_miktar and market_birim:
                             if market_birim == 'kg':
                                 market_miktar *= 1000
@@ -206,13 +214,33 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                                 market_birim = 'ml'
                             elif market_birim == 'g':
                                 market_birim = 'gr'
+                            elif market_birim in ['bağ', 'demet']:
+                                market_birim = 'adet'
 
-                            # 3. ZIRH: MANAV KRİZİ (Adet vs Gr)
+                            # ========================================================
+                            # 3. ZIRH: AKILLI MANAV KRİZİ (ÇİFT YÖNLÜ ÇEVİRİ!)
+                            # ========================================================
+                            ortalama_gramaj = 150
+                            for kelime, gram in adet_gramaj_sozlugu.items():
+                                if kelime in orijinal_isim:
+                                    ortalama_gramaj = gram
+                                    break
+
+                            # YÖN 1: AI "Adet" istedi, Market "Gr" satıyor (Örn: Domates)
                             if ai_birim == "adet" and market_birim == "gr":
-                                ai_miktar = ai_miktar * 150
+                                ai_miktar = ai_miktar * ortalama_gramaj
                                 ai_birim = "gr"
 
+                            # YÖN 2 (YENİ ÇÖZÜM): AI "Gr" istedi, Market "Adet" satıyor (Örn: Maydanoz)
+                            elif ai_birim in ["gr", "ml"] and market_birim == "adet":
+                                # Marketin sattığı ürünün (örn: 1 adet maydanoz) gramajını hesapla!
+                                market_miktar = market_miktar * ortalama_gramaj
+                                market_birim = ai_birim  # Birimleri barıştır ki fiyat orantılı hesaplansın!
+                            # ========================================================
+
+                            # ========================================================
                             # 4. ZIRH: Katı/Sıvı Uyum Kalkanı
+                            # ========================================================
                             uyumlu_birimler = ["gr", "ml"]
                             birim_uyusuyor = (market_birim == ai_birim) or (
                                         market_birim in uyumlu_birimler and ai_birim in uyumlu_birimler)
@@ -223,6 +251,7 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                                 kac_paket_lazim = math.ceil(ai_miktar / market_miktar)
                                 sepet_maliyeti = market_fiyat * kac_paket_lazim
 
+                            # Bu iki satır tam olarak "if ham_fiyat != 0:" ile aynı hizada olmalı!
                         toplam_sepet_maliyeti += sepet_maliyeti
                         toplam_tarif_maliyeti += tarif_maliyeti
 

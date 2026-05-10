@@ -134,7 +134,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                if(data.status === 'ok') {
+                if(data.status === 'ok' || data.status === 'success') {
                     const btn = document.getElementById('favBtn');
                     if(data.is_favorite) {
                         btn.innerHTML = '⭐ Favorilerden Çıkar';
@@ -150,10 +150,8 @@
             .catch(error => console.error('Hata:', error));
         }
 
-        // 1. Django'dan gelen sayıyı sayısal değere çevir
         let orijinalKisi = parseInt("{{ tarif.servings|default:0 }}", 10);
 
-        // 2. Eski tarifler için Metinden okuma zekası (Regex)
         if (orijinalKisi === 0 || orijinalKisi === 1 || isNaN(orijinalKisi)) {
             const tarifMetni = `{{ tarif.instructions|escapejs }}`;
             const regex = /Bu tarif\s+(\d+)\s+kişiliktir/i;
@@ -168,13 +166,11 @@
 
         let guncelKisi = orijinalKisi;
 
-        // Sayfa ilk açıldığında ekrana doğru kişiyi bas
         document.getElementById('kisiSayaci').innerText = guncelKisi + ' Kişilik';
 
         function kisiSayisiDegistir(degisim) {
             let degisimMiktari = parseInt(degisim, 10);
 
-            // Eğer yeni sayı 1'in altına düşecekse, hiçbir şey yapma (Kilit)
             if (guncelKisi + degisimMiktari < 1) {
                 return;
             }
@@ -182,14 +178,11 @@
             guncelKisi += degisimMiktari;
             document.getElementById('kisiSayaci').innerText = guncelKisi + ' Kişilik';
 
-            // Çarpan formülü
             let carpan = guncelKisi / orijinalKisi;
 
             const satirlar = document.querySelectorAll('.malzeme-satiri');
             satirlar.forEach(satir => {
                 const badge = satir.querySelector('.miktar-badge');
-
-                // Güvenlik: Veritabanından virgüllü gelen (400,50) değerleri JS'in anlayacağı noktaya (400.50) çevir
                 let orijinalMiktarText = badge.getAttribute('data-orijinal-miktar').replace(',', '.');
                 let orijinalMiktar = parseFloat(orijinalMiktarText);
 
@@ -211,16 +204,24 @@
 
                 if (!evdeVar) {
                     const badge = satir.querySelector('.miktar-badge');
-                    let guncelMiktar = parseFloat(satir.querySelector('.gosterilen-miktar').innerText);
-                    if (isNaN(guncelMiktar)) guncelMiktar = badge.getAttribute('data-orijinal-miktar');
+
+                    // ÇÖZÜM BURADA: Ekranda makyajlanmış (yuvarlanmış) sayıyı okumayı BIRAKTIK!
+                    // Veritabanındaki orijinal saf sayıyı alıp, matematiksel çarpanla bizzat biz çarpıyoruz.
+                    let orijinalMiktarText = badge.getAttribute('data-orijinal-miktar').replace(',', '.');
+                    let orijinalMiktar = parseFloat(orijinalMiktarText);
+
+                    // Ekranda 3.8 yazsa bile, arka planda milimetrik olarak 3.75 tutulacak!
+                    let gercekNetMiktar = orijinalMiktar * (guncelKisi / orijinalKisi);
 
                     secilenMalzemeler.push({
                         isim: badge.getAttribute('data-isim'),
-                        miktar: guncelMiktar,
+                        miktar: gercekNetMiktar,
                         birim: badge.getAttribute('data-birim')
                     });
                 }
             });
+
+            // ... (Fonksiyonun geri kalan kısmı tamamen aynı kalacak, if(secilenMalzemeler.length === 0) diye devam ediyor) ...
 
             if (secilenMalzemeler.length === 0) {
                 sonucKutusu.innerHTML = `
@@ -233,7 +234,6 @@
             btn.innerHTML = '⏳ Hesaplanıyor... (Çırak Reyonlarda)';
             btn.disabled = true;
 
-            // BOT MESAJI DA GÜNCELLENDİ (porsiyonCarpani hatası veren yer düzeltildi)
             sonucKutusu.innerHTML = `
                 <div class="alert alert-success bg-success bg-opacity-10 border-0 text-success fw-bold p-3" style="border-radius: 15px;">
                     Sadece evde OLMAYAN ${secilenMalzemeler.length} ürün aranıyor... Hedef: ${guncelKisi} Kişilik
@@ -270,16 +270,15 @@
                             </li>`;
                     });
 
-                    // ... (yukarıdaki ürün listeleme döngüsü aynı kalıyor) ...
-
-                    // YENİ: Tek Kişilik Maliyeti JS'de hesaplıyoruz
+                    // ÇÖZÜM BURADA: Migros botu zaten guncelKisi'ye göre malzemeleri çarptı.
+                    // Dönen "toplam_tarif_maliyeti" zaten yeni miktar üzerinden hesaplandı.
+                    // Bu yüzden bunu direkt guncelKisi'ye bölerek SADECE 1 kişinin yediği kısmı buluyoruz.
                     let tekKisilikMaliyet = (parseFloat(data.toplam_tarif_maliyeti) / guncelKisi).toFixed(2);
 
                     fisHTML += `
                             </ul>
                             <div class="card-footer bg-light border-top-0 p-3" style="border-radius: 0 0 15px 15px;">
 
-                                <!-- 1. Market Sepeti (Kasada Ödenecek) -->
                                 <div class="d-flex justify-content-between align-items-center mb-2 p-3 bg-white shadow-sm" style="border-radius: 10px; border-left: 4px solid #6c757d; transition: 0.3s;" onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='translateX(0)'">
                                     <div>
                                         <span class="d-block fw-bold text-secondary">🛒 Market Sepet Tutarı</span>
@@ -288,7 +287,6 @@
                                     <span class="fs-5 fw-bold text-dark">${data.toplam_sepet} TL</span>
                                 </div>
 
-                                <!-- 2. Tüm Tarifin Tüketim Maliyeti -->
                                 <div class="d-flex justify-content-between align-items-center mb-2 p-3 bg-white shadow-sm" style="border-radius: 10px; border-left: 4px solid #ffc107; transition: 0.3s;" onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='translateX(0)'">
                                     <div>
                                         <span class="d-block fw-bold text-warning" style="text-shadow: 0 0 1px rgba(0,0,0,0.1);">👨‍🍳 Tüm Tarif Maliyeti (${guncelKisi} Kişilik)</span>
@@ -297,7 +295,6 @@
                                     <span class="fs-5 fw-bold text-dark">${data.toplam_tarif_maliyeti} TL</span>
                                 </div>
 
-                                <!-- 3. Tek Kişilik Maliyet (VURUCU KISIM) -->
                                 <div class="d-flex justify-content-between align-items-center p-3 bg-danger bg-opacity-10 shadow-sm" style="border-radius: 10px; border-left: 4px solid #dc3545; transition: 0.3s;" onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='translateX(0)'">
                                     <div>
                                         <span class="d-block fw-bold text-danger">👤 1 Kişilik Maliyet</span>
@@ -313,8 +310,7 @@
                 } else {
                     sonucKutusu.innerHTML = `<div class="alert alert-danger border-0 shadow-sm mt-3" style="border-radius: 15px;">❌ Hata: ${data.mesaj}</div>`;
                 }
-            }) // ... (kalan kodlar aynı devam ediyor)
-
+            })
             .catch(error => {
                 btn.innerHTML = '💰 Migros Maliyeti Hesapla';
                 btn.disabled = false;
