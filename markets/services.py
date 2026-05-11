@@ -25,6 +25,7 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "yumurta akı": "keskinoglu 15'li l büyük boy yumurta",
         "süt": "migros uht süt 1 l",
         "vanilya": "dr.oetker şekerli vanilin",
+        "toz vanilya": "dr.oetker şekerli vanilin",
         "süt kreması": "tikveşli krema",
         "süt kreması (karamel i̇çin)": "tikveşli krema",
         "krema": "tikveşli krema",
@@ -111,7 +112,10 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "havuç": 100, "limon": 100, "salatalık": 120, "biber": 30, "yeşil biber": 30,
         "kırmızı biber": 50, "çarliston": 30, "lavaş": 50, "pide": 200, "sarımsak": 5,
         "mantar": 20, "çilek": 15, "muz": 120, "elma": 150,
-        "maydanoz": 50, "dereotu": 50, "nane": 50, "roka": 50, "marul": 300, "kıvırcık": 300
+        "maydanoz": 50, "dereotu": 50, "nane": 50, "roka": 50, "marul": 300, "kıvırcık": 300,
+        "yumurta": 50,
+        "yumurta sarısı": 50,
+        "yumurta akı": 50
     }
 
     # ====================================================================================
@@ -205,31 +209,31 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                         # ========================================================
                         # 2. ZIRH: MARKET İSMİNDEN GRAMAJ AYIKLAMA (DAHA ZEKİ)
                         # ========================================================
-                        match = re.search(r'(\d+[\.,]?\d*)\s*(G|KG|ML|L|ADET|BAĞ|DEMET)\b', market_isim, re.IGNORECASE)
-                        if match:
-                            market_miktar = float(match.group(1).replace(',', '.'))
-                            market_birim = match.group(2).lower()
+                        market_miktar = None
+                        market_birim = None
+
+                        # YENİ EKLENEN KORUMA: ÖNCE ÇOKLU PAKET KONTROLÜ (Örn: 15'li, 30'lu, 6'lı)
+                        # Migros isminde "15'li" yazıyorsa, bunun 15 ADET olduğunu anla!
+                        match_coklu = re.search(r'(\d+)\s*\'*[l][ıiuü]\b', market_isim, re.IGNORECASE)
+                        if match_coklu:
+                            market_miktar = float(match_coklu.group(1))
+                            market_birim = "adet"
                         else:
-                            match_tek = re.search(r'\b(KG|L|ADET|BAĞ|DEMET)\b', market_isim, re.IGNORECASE)
-                            if match_tek:
-                                market_miktar = 1.0
-                                market_birim = match_tek.group(1).lower()
+                            # Eğer çoklu paket değilse, standart gramaj aramasına (eski sisteme) devam et
+                            match = re.search(r'(\d+[\.,]?\d*)\s*(G|KG|ML|L|ADET|BAĞ|DEMET)\b', market_isim,
+                                              re.IGNORECASE)
+                            if match:
+                                market_miktar = float(match.group(1).replace(',', '.'))
+                                market_birim = match.group(2).lower()
                             else:
-                                market_miktar = 1.0
-                                market_birim = "adet"
-
-                        if market_miktar and market_birim:
-                            if market_birim == 'kg':
-                                market_miktar *= 1000
-                                market_birim = 'gr'
-                            elif market_birim == 'l':
-                                market_miktar *= 1000
-                                market_birim = 'ml'
-                            elif market_birim == 'g':
-                                market_birim = 'gr'
-                            elif market_birim in ['bağ', 'demet']:
-                                market_birim = 'adet'
-
+                                match_tek = re.search(r'\b(KG|L|ADET|BAĞ|DEMET)\b', market_isim, re.IGNORECASE)
+                                if match_tek:
+                                    market_miktar = 1.0
+                                    market_birim = match_tek.group(1).lower()
+                                else:
+                                    # HİÇBİR BİRİM YAZMIYORSA = 1 Adet say!
+                                    market_miktar = 1.0
+                                    market_birim = "adet"
                             # ========================================================
                             # 3. ZIRH: AKILLI MANAV KRİZİ (ÇİFT YÖNLÜ ÇEVİRİ!)
                             # ========================================================

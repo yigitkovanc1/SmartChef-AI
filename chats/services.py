@@ -85,9 +85,10 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
         1. EĞER KULLANICI MALZEME VERİRSE (Sihirli Dolap): Verdiği malzemeleri BAŞROLDE kullan. Sadece yemeği bağlamak için çok temel eksikleri (yağ, tuz, un vb.) listeye ekle.
         2. FORMAT KURALI: Cevabını KESİNLİKLE VE SADECE aşağıdaki JSON formatında vermelisin. Başka hiçbir metin ekleme.
         3. MARKET KURALI: Egzotik malzeme KULLANMA. 'Sıvı Yağ' yerine 'Ayçiçek Yağı' yaz. 'Kıyma' yerine 'Dana Kıyma' yaz.
-        4. İSİMLENDİRME VE BİRİM KURALI (KULLANICI DENEYİMİ İÇİN ÇOK ÖNEMLİ!): 
-           - İnsanların mutfakta kullandığı doğal ölçüleri KULLAN: "su bardağı", "yemek kaşığı", "çay kaşığı", "diş", "adet", "dilim" veya "gr".
-           - AMA ASLA belirsiz sıfatlar KULLANMA! "Orta boy", "büyük boy", "bir tutam", "göz kararı", "yarım" kelimeleri YASAKTIR! (Örn: "Orta boy soğan" yerine SADECE "Soğan" yaz).
+        4. KESİN METRİK BİRİM KURALI (SİSTEMİN ÇALIŞMASI İÇİN HAYATİ ÖNEM TAŞIR!): 
+           - Malzemelerin "birim" kısmında İSTİSNASIZ SADECE "gr" veya "ml" KULLANABİLİRSİN. 
+           - "su bardağı", "yemek kaşığı", "çay kaşığı", "diş", "adet", "dilim", "tutam", "orta boy" gibi geleneksel kelimeleri ASLA KULLANMA!
+           - Dönüşümleri kendi zekanı kullanarak yap: 1 adet soğan/patates/domates lazımsa 150 gr, 1 diş sarımsak lazımsa 5 gr, 1 yumurta lazımsa 50 gr, 1 su bardağı sıvı lazımsa 200 ml, 1 yemek kaşığı lazımsa 15 gr/ml yaz.
         5. TEK KALEM KURALI (ÇOK ÖNEMLİ!): Malzemeleri ASLA "Sos için", "Köfte için" diye gruplara ayırma. Aynı malzemeyi listede iki kere YAZMA. Eğer tuz hem sosta hem köftede kullanılacaksa, toplam miktarını hesapla ve JSON listesine SADECE BİR KERE "Tuz" olarak yaz.
         6. "EVDE VAR" ZEKASI: Kullanıcının mesajında sana verdiği malzemeler için "evde_var" değerini true yap. Senin ekstra eklediklerin için false yap! (Hiç malzeme vermezse hepsini false yap).
 
@@ -97,10 +98,10 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
             "sohbet": "İşte harika bir tarif! 1. Adım... 2. Adım... (YAPILIŞ AŞAMALARINI DETAYLI YAZ)",
             "malzemeler": [
                 {{"isim": "Banvit Piliç Göğüs", "miktar": 400, "birim": "gr", "evde_var": true}},
-                {{"isim": "Soğan", "miktar": 1, "birim": "adet", "evde_var": true}},
-                {{"isim": "Sarımsak", "miktar": 2, "birim": "diş", "evde_var": true}},
-                {{"isim": "Karabiber", "miktar": 1, "birim": "çay kaşığı", "evde_var": false}},
-                {{"isim": "Ayçiçek Yağı", "miktar": 2, "birim": "yemek kaşığı", "evde_var": false}}
+                {{"isim": "Soğan", "miktar": 150, "birim": "gr", "evde_var": true}},
+                {{"isim": "Sarımsak", "miktar": 10, "birim": "gr", "evde_var": true}},
+                {{"isim": "Karabiber", "miktar": 5, "birim": "gr", "evde_var": false}},
+                {{"isim": "Ayçiçek Yağı", "miktar": 30, "birim": "ml", "evde_var": false}}
             ]
         }}
 
@@ -145,6 +146,26 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
         malzemeler_listesi = ai_data.get("malzemeler", [])
 
         sohbet_metni = f"🍽️ **Bu tarif {kac_kisilik} kişiliktir.**\n\n" + sohbet_metni
+
+        # =========================================================================
+        # 🚀 YENİ UX DOKUNUŞU: TARİFİN SONUNA ŞEFFAF ÖLÇÜ REHBERİ EKLENİYOR
+        # =========================================================================
+        rehber_metni = (
+            "\n\n---\n"
+            "**📏 SmartChef Ölçü Rehberi (Market Maliyetleri Buna Göre Hesaplanır):**\n"
+            "* 1 Su Bardağı = ~200 gr/ml\n"
+            "* 1 Çay Bardağı = ~100 gr/ml\n"
+            "* 1 Yemek Kaşığı = ~15 gr/ml\n"
+            "* 1 Tatlı Kaşığı = ~10 gr\n"
+            "* 1 Çay Kaşığı = ~5 gr\n"
+            "* 1 Diş Sarımsak = ~5 gr\n"
+            "* 1 Adet Sebze/Meyve (Ortalama) = ~150 gr\n"
+            "* 1 Lavaş/Pide = ~50-200 gr\n"
+        )
+
+        # Sadece 1 kere eklemek için sohbet metnini birleştiriyoruz
+        sohbet_metni = f"🍽️ **Bu tarif {kac_kisilik} kişiliktir.**\n\n" + sohbet_metni + rehber_metni
+        # =========================================================================
 
         if malzemeler_listesi:
 
