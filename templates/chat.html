@@ -74,7 +74,7 @@
                     <a href="/" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🏠 Ana Sayfa</a>
                     <a href="/hesap/profil/" class="btn btn-outline-info btn-sm fw-bold shadow-sm" style="border-radius: 8px;">👤 Profilim</a>
                     <a href="/hesap/dashboard/" class="btn btn-outline-success btn-sm fw-bold shadow-sm" style="border-radius: 8px;">📊 Maliyetler</a>
-                    <a href="{% url 'tarif_defterim' %}" class="btn btn-outline-warning btn-sm fw-bold shadow-sm" style="border-radius: 8px;">📖 Defterim</a>
+                    <a href="{% url 'tarif_defterim' %}" class="btn btn-outline-warning btn-sm fw-bold shadow-sm text-dark" style="border-radius: 8px;">📖 Defterim</a>
                     <button onclick="history.back()" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" style="border-radius: 8px;">🔙 Geri Dön</button>
                     <form action="{% url 'cikis_yap' %}" method="post" style="display: inline; margin: 0;">
                         {% csrf_token %}
@@ -202,13 +202,11 @@
                         <div id="malzeme-listesi-${data.recipe_id}">`;
 
                 data.malzemeler.forEach(function(item) {
-                    // YENİ: JSON objesini parçalıyoruz (Artık split ile string bölmeye gerek yok)
                     const isim = item.isim || "Bilinmeyen Malzeme";
                     const miktar = parseFloat(item.miktar) || 0;
                     const birim = item.birim || "";
-                    const evdeVar = item.evde_var === true; // Zeka burada!
+                    const evdeVar = item.evde_var === true;
 
-                    // Evde varsa otomatik işaretle ve üstünü çiz
                     const checkedAttr = evdeVar ? "checked" : "";
                     const strikethroughClass = evdeVar ? "strikethrough" : "";
 
@@ -363,25 +361,49 @@
 
     async function toggleFavori(recipeId, btnElement) {
         try {
-            const res = await fetch(`/tarifler/favori-yap/${recipeId}/`, {
+            const orijinalMetin = btnElement.innerHTML;
+            btnElement.innerHTML = '⏳ İşleniyor...';
+            btnElement.disabled = true;
+
+            const res = await fetch(`/tarifler/toggle-favorite/${recipeId}/`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    // ÇÖZÜM 1: DOM'dan aramak yerine Django'nun kendi etiketini doğrudan JS içine gömdük! En güvenli yoldur.
+                    'X-CSRFToken': '{{ csrf_token }}',
                     'Content-Type': 'application/json'
                 }
             });
+
+            // ÇÖZÜM 2: KALKANI ŞEFFAFLAŞTIRDIK! Artık sadece "hata" demiyor, hatanın ne olduğunu söylüyor!
+            if (!res.ok) {
+                const hataKodu = res.status;
+                throw new Error(`Django Sunucusu ${hataKodu} hatası verdi!`);
+            }
+
             const data = await res.json();
-            if (data.status === 'ok') {
+            btnElement.disabled = false;
+
+            if (data.status === 'ok' || data.status === 'success') {
                 if (data.is_favorite) {
                     btnElement.innerHTML = '🌟 Favorilerimde';
-                    btnElement.classList.replace('btn-outline-warning', 'btn-warning');
+                    btnElement.classList.remove('btn-outline-warning');
+                    btnElement.classList.add('btn-warning', 'text-dark');
                 } else {
                     btnElement.innerHTML = '⭐ Favorilere Ekle';
-                    btnElement.classList.replace('btn-warning', 'btn-outline-warning');
+                    btnElement.classList.remove('btn-warning', 'text-dark');
+                    btnElement.classList.add('btn-outline-warning');
                 }
+            } else {
+                btnElement.innerHTML = orijinalMetin;
+                alert("Hata: " + (data.message || "İşlem başarısız oldu."));
             }
         } catch (err) {
-            console.error("Favori hatası:", err);
+            console.error("Favori Sistem Hatası:", err);
+            btnElement.innerHTML = '❌ Hata Oluştu';
+            btnElement.disabled = false;
+
+            // Kullanıcıya hatanın cinsini gösteriyoruz
+            alert("Sistem Hatası: " + err.message);
         }
     }
 

@@ -1,6 +1,6 @@
 import requests
 import re
-import math  # Yukarı yuvarlama işlemleri için
+import math
 
 def migros_maliyet_hesapla(ai_malzemeler_listesi):
     hesaplanmis_malzemeler = []
@@ -8,7 +8,7 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
     toplam_sepet_maliyeti = 0
 
     # 1. BEDAVA OLAN VEYA ARANMAYACAK MALZEMELER
-    yoksayilacaklar = ["su", "sıcak su", "soğuk su", "musluk suyu", "buz", "kaynar su", "Ilık Su"]
+    yoksayilacaklar = ["su", "sıcak su", "soğuk su", "musluk suyu", "buz", "kaynar su", "ılık su"]
 
     # 2. YANLIŞ ANLAŞILAN KELİMELERİ MİGROS'UN ANLAYACAĞI DİLE ÇEVİRME
     kelime_sozlugu = {
@@ -23,29 +23,23 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "yumurta": "keskinoglu 15'li l büyük boy yumurta",
         "yumurta sarısı": "keskinoglu 15'li l büyük boy yumurta",
         "yumurta akı": "keskinoglu 15'li l büyük boy yumurta",
-        "süt": "migros uht süt 1 l",
         "vanilya": "dr.oetker şekerli vanilin",
         "toz vanilya": "dr.oetker şekerli vanilin",
+        "şekerli vanilin": "dr.oetker şekerli vanilin",
         "süt kreması": "tikveşli krema",
-        "süt kreması (karamel i̇çin)": "tikveşli krema",
         "krema": "tikveşli krema",
         "yoğurt": "Sütaş Kaymaksız Yoğurt 1000 G",
         "kabartma tozu": "dr.oetker kabartma tozu",
-        "şekerli vanilin": "dr.oetker şekerli vanilin",
         "kakao": "dr.oetker kakao",
         "kuru maya": "dr.oetker kuru maya",
         "yaş maya": "pakmaya yaş maya",
-        "Kedidili Bisküvi": "Balocco Savoiardı 200 G",
+        "kedidili bisküvi": "Balocco Savoiardı 200 G",
         "kedi dili": "Balocco Savoiardı 200 G",
         "kıyma": "uzman kasap dana kıyma",
         "dana kıyma": "uzman kasap dana kıyma",
         "tavuk göğsü": "banvit piliç göğüs",
         "sucuk": "şahin dana sucuk",
         "sosis": "pınar sosis",
-        "tavuk göğüs": "piliç bonfile",
-        "kemiksiz tavuk göğsü": "piliç bonfile",
-        "kuşbaşı tavuk": "piliç sote",
-        "tavuk kalça": "piliç incik",
         "salça": "tat domates salçası",
         "domates salçası": "tat domates salçası",
         "makarna": "filiz makarna",
@@ -57,26 +51,21 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "pide": "lavaş",
         "biber": "çarliston biber",
         "yeşil biber": "çarliston biber",
-        "sarımsak": "kuru sarımsak file",
-        "diş sarımsak": "kuru sarımsak file",
-        "baş sarımsak": "kuru sarımsak file",
+        "sarımsak": "kuru sarımsak file"
     }
 
     birim_ceviri_sozlugu = {
-        # 1. KAŞIK ÖLÇÜLERİ
         "çay kaşığı": {"carpan": 5, "yeni_birim": "gr"},
         "tatlı kaşığı": {"carpan": 10, "yeni_birim": "gr"},
         "yemek kaşığı": {"carpan": 15, "yeni_birim": "gr"},
         "çorba kaşığı": {"carpan": 15, "yeni_birim": "gr"},
         "kahve kaşığı": {"carpan": 3, "yeni_birim": "gr"},
-        # 2. BARDAK VE FİNCAN ÖLÇÜLERİ
         "su bardağı": {"carpan": 200, "yeni_birim": "gr"},
         "çay bardağı": {"carpan": 100, "yeni_birim": "gr"},
         "kahve fincanı": {"carpan": 75, "yeni_birim": "gr"},
         "fincan": {"carpan": 50, "yeni_birim": "gr"},
         "kupa": {"carpan": 250, "yeni_birim": "gr"},
         "kase": {"carpan": 300, "yeni_birim": "gr"},
-        # 3. KATI VE YARDIMCI MALZEME ÖLÇÜLERİ
         "diş": {"carpan": 5, "yeni_birim": "gr"},
         "baş": {"carpan": 50, "yeni_birim": "gr"},
         "dilim": {"carpan": 30, "yeni_birim": "gr"},
@@ -84,13 +73,11 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "yaprak": {"carpan": 2, "yeni_birim": "gr"},
         "dal": {"carpan": 5, "yeni_birim": "gr"},
         "kök": {"carpan": 20, "yeni_birim": "gr"},
-        # 4. GÖZ KARARI VE JARGON ÖLÇÜLERİ
         "tutam": {"carpan": 2, "yeni_birim": "gr"},
         "avuç": {"carpan": 30, "yeni_birim": "gr"},
         "kepçe": {"carpan": 100, "yeni_birim": "ml"},
         "damla": {"carpan": 1, "yeni_birim": "ml"},
         "fiske": {"carpan": 1, "yeni_birim": "gr"},
-        # 5. BÜYÜK AĞIRLIK VE HACİM BİRİMLERİ
         "kilogram": {"carpan": 1000, "yeni_birim": "gr"},
         "kilo": {"carpan": 1000, "yeni_birim": "gr"},
         "kg": {"carpan": 1000, "yeni_birim": "gr"},
@@ -99,7 +86,6 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "yarım kilo": {"carpan": 500, "yeni_birim": "gr"},
         "yarım litre": {"carpan": 500, "yeni_birim": "ml"},
         "çeyrek kilo": {"carpan": 250, "yeni_birim": "gr"},
-        # 6. PAKET VE AMBALAJ ÖLÇÜLERİ
         "paket": {"carpan": 1, "yeni_birim": "adet"},
         "kutu": {"carpan": 1, "yeni_birim": "adet"},
         "kavanoz": {"carpan": 1, "yeni_birim": "adet"},
@@ -113,13 +99,11 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         "kırmızı biber": 50, "çarliston": 30, "lavaş": 50, "pide": 200, "sarımsak": 5,
         "mantar": 20, "çilek": 15, "muz": 120, "elma": 150,
         "maydanoz": 50, "dereotu": 50, "nane": 50, "roka": 50, "marul": 300, "kıvırcık": 300,
-        "yumurta": 50,
-        "yumurta sarısı": 50,
-        "yumurta akı": 50
+        "yumurta": 50, "yumurta sarısı": 50, "yumurta akı": 50
     }
 
     # ====================================================================================
-    # 🚀 YENİ MİMARİ: DATA AGGREGATOR (KOPYA MALZEME BİRLEŞTİRİCİ ZIRH)
+    # YENİ MİMARİ: DATA AGGREGATOR (KOPYA MALZEME BİRLEŞTİRİCİ ZIRH)
     # ====================================================================================
     birlestirilmis_dict = {}
 
@@ -128,36 +112,29 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
         ai_miktar = float(malz.get('miktar', 1))
         ai_birim = malz.get('birim', '').lower().strip()
 
-        # 1. Önce yapay zekanın "çay kaşığı, diş" gibi birimlerini tek bir dile (gram/ml) çeviriyoruz.
-        # Neden burada yapıyoruz? Çünkü "1 diş sarımsak" ile "2 gram sarımsak" farklı görünür,
-        # ama ikisini de grama çevirirsek birleştirici bunları kolayca tanıyıp toplar!
         for eski_birim, donusum in birim_ceviri_sozlugu.items():
             if eski_birim in ai_birim:
                 ai_miktar = ai_miktar * donusum["carpan"]
                 ai_birim = donusum["yeni_birim"]
                 break
 
-        # Sözlük anahtarı yaratıyoruz (Örn: "karabiber_gr")
         anahtar = f"{orijinal_isim}_{ai_birim}"
 
         if anahtar in birlestirilmis_dict:
-            # Ürün zaten eklenmişse, sadece miktarını üstüne ekle (Duplicate çözümü)
             birlestirilmis_dict[anahtar]['miktar'] += ai_miktar
         else:
-            # Ürün ilk defa geliyorsa sözlüğe yeni kayıt aç
             birlestirilmis_dict[anahtar] = {
-                "isim": malz.get('isim', ''), # Ekranda ilk gelen güzel ismi koru
+                "isim": malz.get('isim', ''),
                 "orijinal_isim": orijinal_isim,
                 "miktar": ai_miktar,
                 "birim": ai_birim
             }
 
-    # Sözlüğü tekrar döngüye sokabileceğimiz bir listeye çeviriyoruz
     ai_malzemeler_birlestirilmis = list(birlestirilmis_dict.values())
+
     # ====================================================================================
-
-
-    # Artık eski, kalabalık liste yerine; TEMİZLENMİŞ VE BİRLEŞTİRİLMİŞ listeyi kullanıyoruz!
+    # MİGROS BOTU BAŞLIYOR
+    # ====================================================================================
     for malz in ai_malzemeler_birlestirilmis:
         orijinal_isim = malz['orijinal_isim']
         ai_miktar = malz['miktar']
@@ -207,21 +184,14 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                         market_birim = None
 
                         # ========================================================
-                        # 2. ZIRH: MARKET İSMİNDEN GRAMAJ AYIKLAMA (DAHA ZEKİ)
+                        # 2. ZIRH: MARKET İSMİNDEN GRAMAJ AYIKLAMA
                         # ========================================================
-                        market_miktar = None
-                        market_birim = None
-
-                        # YENİ EKLENEN KORUMA: ÖNCE ÇOKLU PAKET KONTROLÜ (Örn: 15'li, 30'lu, 6'lı)
-                        # Migros isminde "15'li" yazıyorsa, bunun 15 ADET olduğunu anla!
                         match_coklu = re.search(r'(\d+)\s*\'*[l][ıiuü]\b', market_isim, re.IGNORECASE)
                         if match_coklu:
                             market_miktar = float(match_coklu.group(1))
                             market_birim = "adet"
                         else:
-                            # Eğer çoklu paket değilse, standart gramaj aramasına (eski sisteme) devam et
-                            match = re.search(r'(\d+[\.,]?\d*)\s*(G|KG|ML|L|ADET|BAĞ|DEMET)\b', market_isim,
-                                              re.IGNORECASE)
+                            match = re.search(r'(\d+[\.,]?\d*)\s*(G|KG|ML|L|ADET|BAĞ|DEMET)\b', market_isim, re.IGNORECASE)
                             if match:
                                 market_miktar = float(match.group(1).replace(',', '.'))
                                 market_birim = match.group(2).lower()
@@ -231,12 +201,24 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                                     market_miktar = 1.0
                                     market_birim = match_tek.group(1).lower()
                                 else:
-                                    # HİÇBİR BİRİM YAZMIYORSA = 1 Adet say!
                                     market_miktar = 1.0
                                     market_birim = "adet"
-                            # ========================================================
-                            # 3. ZIRH: AKILLI MANAV KRİZİ (ÇİFT YÖNLÜ ÇEVİRİ!)
-                            # ========================================================
+
+                        # ========================================================
+                        # 3. ZIRH: AKILLI MANAV KRİZİ VE MATEMATİK HESABI
+                        # ========================================================
+                        if market_miktar and market_birim:
+                            if market_birim == 'kg':
+                                market_miktar *= 1000
+                                market_birim = 'gr'
+                            elif market_birim == 'l':
+                                market_miktar *= 1000
+                                market_birim = 'ml'
+                            elif market_birim == 'g':
+                                market_birim = 'gr'
+                            elif market_birim in ['bağ', 'demet']:
+                                market_birim = 'adet'
+
                             ortalama_gramaj = 150
                             for kelime, gram in adet_gramaj_sozlugu.items():
                                 if kelime in orijinal_isim:
@@ -251,23 +233,22 @@ def migros_maliyet_hesapla(ai_malzemeler_listesi):
                                 market_miktar = market_miktar * ortalama_gramaj
                                 market_birim = ai_birim
 
-                            # ========================================================
-                            # 4. ZIRH: Katı/Sıvı Uyum Kalkanı
-                            # ========================================================
                             uyumlu_birimler = ["gr", "ml"]
                             birim_uyusuyor = (market_birim == ai_birim) or (
                                         market_birim in uyumlu_birimler and ai_birim in uyumlu_birimler)
 
+                            # MATEMATİĞİN ÇALIŞTIĞI ANA KALP BURASI:
                             if birim_uyusuyor and market_miktar > 0:
                                 birim_fiyat = market_fiyat / market_miktar
                                 tarif_maliyeti = birim_fiyat * ai_miktar
                                 kac_paket_lazim = math.ceil(ai_miktar / market_miktar)
                                 sepet_maliyeti = market_fiyat * kac_paket_lazim
 
+                        # Toplamları güncelle
                         toplam_sepet_maliyeti += sepet_maliyeti
                         toplam_tarif_maliyeti += tarif_maliyeti
 
-                        gosterilecek_isim = market_isim if kac_paket_lazim == 1 else f"{market_isim} (x{kac_paket_lazim})"
+                        gosterilecek_isim = market_isim if kac_paket_lazim <= 1 else f"{market_isim} (x{kac_paket_lazim})"
 
                         hesaplanmis_malzemeler.append({
                             "isim": malz.get('isim', ''),
