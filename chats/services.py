@@ -164,7 +164,7 @@ def gemini_ile_sohbet_et(user, session_id, user_message):
         )
 
         # Sadece 1 kere eklemek için sohbet metnini birleştiriyoruz
-        sohbet_metni = f"🍽️ **Bu tarif {kac_kisilik} kişiliktir.**\n\n" + sohbet_metni + rehber_metni
+        sohbet_metni = sohbet_metni + rehber_metni
         # =========================================================================
 
         if malzemeler_listesi:
