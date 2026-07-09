@@ -2,6 +2,9 @@
 
 SmartChef AI, evdeki mevcut malzemeleri en verimli şekilde değerlendirerek yemek israfını önlemeyi amaçlayan, yapay zeka destekli bir mutfak ve maliyet yönetimi asistanıdır. MAT132 dersi projesi olarak temelleri atılan bu platform, kullanıcıların mutfaklarındaki malzemelerle bütçe dostu, ölçülü ve lezzetli tarifler oluşturmasına olanak tanır.
 
+assets/giris_ve_kayit_sayfasi.png
+assets/anasayfa.png
+
 ## 🚀 Proje Vizyonu
 
 Günümüzde gıda israfı, hem ekolojik hem de ekonomik açıdan büyük bir problem teşkil etmektedir. SmartChef AI; "Bugün ne pişirsem?" sorusunu ortadan kaldırırken, evdeki malzemelerin çöpe gitmesini engeller. Hedefimiz, profesyonel mutfak hassasiyetini (gram/mililitre bazlı ölçümler) ev kullanıcılarına sunarak, porsiyon bazlı maliyet analizleriyle ev ekonomisine doğrudan katkı sağlamaktır.
@@ -10,15 +13,20 @@ Günümüzde gıda israfı, hem ekolojik hem de ekonomik açıdan büyük bir pr
 
 * **🪄 Sihirli Dolap:** Sisteme girdiğiniz mevcut malzemeleri analiz ederek, ekstra alışverişe gerek kalmadan yapabileceğiniz en uygun yemekleri otomatik olarak tespit eder.
 * **🧠 Gemini AI ile Akıllı Tarifler:** Google Gemini API entegrasyonu sayesinde, elinizdeki kısıtlı malzemelerle bile yaratıcı, lezzetli ve atıksız tarif alternatifleri üretir.
+ assets/chat_tarif.png
 * **⚖️ Metrik Sistem Hassasiyeti:** "Göz kararı" kavramını geride bırakarak, gr ve ml tabanlı kesin ölçümlerle tutarlı sonuçlar veren tarifler oluşturur.
+  assets/tarif_defteri.png
 * **💰 Ekonomik Maliyet Hesaplama:** Kullanılan malzemelerin güncel verilerine dayanarak yemeğin porsiyon başına düşen maliyetini hesaplar, bütçe dostu mutfak yönetimi sağlar.
+  assets/chat_maliyet.png
+  assets/maliyet_dashboard.png
+  assets/maliyet_ligi.png
 
 ## 🛠️ Teknolojiler (Tech Stack)
 
 Bu proje, güçlü bir backend mimarisi ve kullanıcı dostu bir arayüz ile geliştirilmiştir:
 
 * **Backend:** Django, Python
-* **Frontend:** Bootstrap, HTML5, CSS3 (Veri görselleştirme ve analiz panelleri için Streamlit)
+* **Frontend:** Bootstrap, HTML5, CSS3 
 * **Veritabanı:** Django
 * **Yapay Zeka:** Google Gemini API
 
