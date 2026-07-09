@@ -2,8 +2,8 @@
 
 SmartChef AI, evdeki mevcut malzemeleri en verimli şekilde değerlendirerek yemek israfını önlemeyi amaçlayan, yapay zeka destekli bir mutfak ve maliyet yönetimi asistanıdır. MAT132 dersi projesi olarak temelleri atılan bu platform, kullanıcıların mutfaklarındaki malzemelerle bütçe dostu, ölçülü ve lezzetli tarifler oluşturmasına olanak tanır.
 
-assets/giris_ve_kayit_sayfasi.png
-assets/anasayfa.png
+(assets/giris_ve_kayit_sayfasi.png)
+(assets/anasayfa.png)
 
 ## 🚀 Proje Vizyonu
 
@@ -13,13 +13,13 @@ Günümüzde gıda israfı, hem ekolojik hem de ekonomik açıdan büyük bir pr
 
 * **🪄 Sihirli Dolap:** Sisteme girdiğiniz mevcut malzemeleri analiz ederek, ekstra alışverişe gerek kalmadan yapabileceğiniz en uygun yemekleri otomatik olarak tespit eder.
 * **🧠 Gemini AI ile Akıllı Tarifler:** Google Gemini API entegrasyonu sayesinde, elinizdeki kısıtlı malzemelerle bile yaratıcı, lezzetli ve atıksız tarif alternatifleri üretir.
- assets/chat_tarif.png
+ (assets/chat_tarif.png)
 * **⚖️ Metrik Sistem Hassasiyeti:** "Göz kararı" kavramını geride bırakarak, gr ve ml tabanlı kesin ölçümlerle tutarlı sonuçlar veren tarifler oluşturur.
   assets/tarif_defteri.png
 * **💰 Ekonomik Maliyet Hesaplama:** Kullanılan malzemelerin güncel verilerine dayanarak yemeğin porsiyon başına düşen maliyetini hesaplar, bütçe dostu mutfak yönetimi sağlar.
-  assets/chat_maliyet.png
-  assets/maliyet_dashboard.png
-  assets/maliyet_ligi.png
+  (assets/chat_maliyet.png)
+  (assets/maliyet_dashboard.png)
+  (assets/maliyet_ligi.png)
 
 ## 🛠️ Teknolojiler (Tech Stack)
 
